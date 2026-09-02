@@ -1,0 +1,27 @@
+// Lumen wire IDL — skeleton.
+//
+// Status: placeholder. W1 defines the envelope; message bodies land with W2
+// (`lumen-proto` codec) and must arrive together with codec vectors in
+// ../vectors/codec/.
+//
+// Every message shares one envelope. The security fields exist from day one
+// even while unimplemented: adding them later is a breaking change to every
+// implementation that exists by then.
+
+// version = protocol version for negotiation (see docs/protocol.md).
+// mesh_id  = which place this belongs to; meshes federate, they do not merge.
+// nonce/tag = AEAD under the mesh key.
+
+struct Envelope {
+    u8      version;
+    u8      msg_type;
+    u16     flags;
+    u64     mesh_id;
+    u64     src_device;
+    u64     show_time_us;   // monotonic show clock, never steps
+    u8[12]  nonce;
+    bytes   body;           // AEAD-protected
+    u8[16]  tag;
+}
+
+// enum MsgType { ... }   // W2
