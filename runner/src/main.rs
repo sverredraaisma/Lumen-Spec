@@ -4,5 +4,8 @@
 //! compares its emitted actions against the vectors in `vectors/`.
 
 fn main() {
-    println!("lumen-conformance {} — no vectors implemented yet", env!("CARGO_PKG_VERSION"));
+    println!(
+        "lumen-conformance {} — no vectors implemented yet",
+        env!("CARGO_PKG_VERSION")
+    );
 }
