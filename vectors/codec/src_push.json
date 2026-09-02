@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "message": "SRC_PUSH",
+  "description": "Push a source onto a zone's stack. expires_at is an absolute show time, not a duration, so a source expires at the same instant on every device regardless of when each one received the push. Above the ambient floor an expiry is mandatory: see malformed.json.",
+  "cases": [
+    {
+      "name": "expiring_source_with_overrides",
+      "description": "The normal case \u2014 a priority 100 source that must expire, with parameter overrides attached.",
+      "datagram": "4c013000abcd010203040700000040e201000000000047000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d00112233445566776401f401dc050000804a5d050000000005000102030405aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 48,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 71
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "0102030405060708090a0b0c0d0e0f10",
+          "zone_id": "ffeeddccbbaa99887766554433221100",
+          "scene_id": "deadbeefcafef00d0011223344556677",
+          "priority": 100,
+          "fade_in_ms": 500,
+          "fade_out_ms": 1500,
+          "expires_at": 90000000,
+          "param_overrides": "0102030405"
+        }
+      }
+    },
+    {
+      "name": "ambient_floor_without_expiry",
+      "description": "priority 0 is the ambient floor and is the ONLY priority allowed to omit an expiry. flags bit0 is clear and the u64 is absent from the wire entirely, so the payload is eight bytes shorter.",
+      "datagram": "4c013000abcd010203040700000040e20100000000003a00ffeeddccbbaa998877665544332211000102030405060708090a0b0c0d0e0f100000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 48,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 58
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "ffeeddccbbaa99887766554433221100",
+          "zone_id": "0102030405060708090a0b0c0d0e0f10",
+          "scene_id": "00000000000000000000000000000000",
+          "priority": 0,
+          "fade_in_ms": 0,
+          "fade_out_ms": 0,
+          "expires_at": null,
+          "param_overrides": ""
+        }
+      }
+    },
+    {
+      "name": "ambient_floor_with_expiry",
+      "description": "The floor may still carry an expiry. Presence is driven by flags bit0, never inferred from the priority.",
+      "datagram": "4c013000abcd010203040700000040e20100000000004300deadbeefcafef00d0011223344556677deadbeefcafef00d0011223344556677deadbeefcafef00d00112233445566770001ffffffff000001000000000000000100ffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 48,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 67
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "deadbeefcafef00d0011223344556677",
+          "zone_id": "deadbeefcafef00d0011223344556677",
+          "scene_id": "deadbeefcafef00d0011223344556677",
+          "priority": 0,
+          "fade_in_ms": 65535,
+          "fade_out_ms": 65535,
+          "expires_at": 1,
+          "param_overrides": "ff"
+        }
+      }
+    },
+    {
+      "name": "top_priority_expiring",
+      "description": "priority 255 with an expiry at u64 max. Legal: what the rule forbids is a high priority with no expiry at all, not a distant one.",
+      "datagram": "4c013000abcd010203040700000040e201000000000043000102030405060708090a0b0c0d0e0f100102030405060708090a0b0c0d0e0f100102030405060708090a0b0c0d0e0f10ff01010002000000ffffffffffffffff010000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 48,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 67
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "0102030405060708090a0b0c0d0e0f10",
+          "zone_id": "0102030405060708090a0b0c0d0e0f10",
+          "scene_id": "0102030405060708090a0b0c0d0e0f10",
+          "priority": 255,
+          "fade_in_ms": 1,
+          "fade_out_ms": 2,
+          "expires_at": 18446744073709551615,
+          "param_overrides": "00"
+        }
+      }
+    }
+  ],
+  "code": "0x30"
+}

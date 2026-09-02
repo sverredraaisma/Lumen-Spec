@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "message": "CHAN_CLAIM",
+  "description": "Ownership claim with a lease. Strictly-greater priority preempts; equal priority does not, so two identical producers never fight.",
+  "cases": [
+    {
+      "name": "typical_claim",
+      "description": "A mid-priority claim with a five second lease.",
+      "datagram": "4c012200abcd010203040700000040e201000000000008000700640088130000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 34,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 7,
+          "priority": 100,
+          "lease_ms": 5000
+        }
+      }
+    },
+    {
+      "name": "lowest_priority_zero_lease",
+      "description": "priority 0 with a zero lease \u2014 legal on the wire, and expires immediately at the layer above. The codec has no opinion.",
+      "datagram": "4c012200abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 34,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 1,
+          "priority": 0,
+          "lease_ms": 0
+        }
+      }
+    },
+    {
+      "name": "highest_priority_longest_lease",
+      "description": "priority 255 and a lease of just under 50 days, the u32 ceiling.",
+      "datagram": "4c012200abcd010203040700000040e20100000000000800ffffff00ffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 34,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 65535,
+          "priority": 255,
+          "lease_ms": 4294967295
+        }
+      }
+    }
+  ],
+  "code": "0x22"
+}

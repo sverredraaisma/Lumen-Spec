@@ -31,9 +31,17 @@ is sans-IO — `on_event(now, ev) -> Vec<Action>`. Conformance is literally "giv
 these events, did you emit these actions": no sockets, no timing, no flakiness.
 A three-way split brain is just a longer vector file.
 
-```
+```bash
 cargo run -p lumen-conformance -- --adapter "path/to/adapter" vectors/
+cargo run -p lumen-conformance -- --self-test vectors/   # check the corpus itself
 ```
+
+The codec vectors are in place: 26 files, 97 cases, every assigned message type
+plus the L1 header and a `malformed.json` of negative cases. Each well-formed
+case is checked **both ways** — bytes to structure and structure back to the
+same bytes — because a one-directional vector lets an encoder and a decoder
+drift together. `vectors/README.md` has the schema; `adapters/README.md` has the
+line protocol.
 
 ## Changing the protocol
 

@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "message": "FRAME",
+  "description": "Direct pixel data, bypassing the VM. Pixel bytes are exactly count x bytes_per_pixel; a length that disagrees is a malformed frame.",
+  "cases": [
+    {
+      "name": "rgb8_two_pixels",
+      "description": "Format 0, three bytes per pixel.",
+      "datagram": "4c012400abcd010203040700000040e20100000000000e0001000000000a0200ff000000ff00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 36,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 14
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "segment_id": 1,
+          "offset": 0,
+          "format": 0,
+          "priority": 10,
+          "count": 2,
+          "pixels": "ff000000ff00"
+        }
+      }
+    },
+    {
+      "name": "rgbw8_one_pixel",
+      "description": "Format 1, four bytes per pixel \u2014 the white channel is not padding.",
+      "datagram": "4c012400abcd010203040700000040e20100000000000c00020010000100010011223344aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 36,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 12
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "segment_id": 2,
+          "offset": 16,
+          "format": 1,
+          "priority": 0,
+          "count": 1,
+          "pixels": "11223344"
+        }
+      }
+    },
+    {
+      "name": "rgb16_one_pixel",
+      "description": "Format 2, six bytes per pixel. Sixteen bits per channel is where a decoder that hard-coded three bytes per pixel falls over.",
+      "datagram": "4c012400abcd010203040700000040e20100000000000e000300000002c80100010203040506aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 36,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 14
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "segment_id": 3,
+          "offset": 0,
+          "format": 2,
+          "priority": 200,
+          "count": 1,
+          "pixels": "010203040506"
+        }
+      }
+    },
+    {
+      "name": "cct_two_pixels",
+      "description": "Format 3, four bytes per pixel: correlated colour temperature plus intensity. Same width as RGBW8 and a different meaning, which is why format travels rather than being inferred from the length.",
+      "datagram": "4c012400abcd010203040700000040e201000000000010000400ffff03ff0200aabbccddeeff0011aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 36,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "segment_id": 4,
+          "offset": 65535,
+          "format": 3,
+          "priority": 255,
+          "count": 2,
+          "pixels": "aabbccddeeff0011"
+        }
+      }
+    },
+    {
+      "name": "zero_pixels",
+      "description": "count 0 with no pixel bytes. A keep-alive frame is legal.",
+      "datagram": "4c012400abcd010203040700000040e201000000000008000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 36,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "segment_id": 0,
+          "offset": 0,
+          "format": 0,
+          "priority": 0,
+          "count": 0,
+          "pixels": ""
+        }
+      }
+    }
+  ],
+  "code": "0x24"
+}

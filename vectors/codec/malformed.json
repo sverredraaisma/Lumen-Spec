@@ -1,0 +1,217 @@
+{
+  "schema": 1,
+  "message": "MALFORMED",
+  "description": "Deliberately bad inputs, each declaring its required outcome. How an implementation handles rubbish is part of the protocol: an implementation that accepts everything looks perfectly healthy right up until something malformed reaches it. Outcomes are 'reject' (refuse and say so), 'ignore' (drop silently, no error) and 'accept' (decode successfully; the input is unusual but legal). The ignore/reject split is not cosmetic \u2014 see unknown_message_type.",
+  "cases": [
+    {
+      "name": "bad_magic",
+      "description": "First byte is not 0x4C. Almost always another protocol on a shared port rather than corruption, which is why it is worth a cheap check before anything else happens.",
+      "datagram": "58011100abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "magic 0x58 is not 0x4C"
+    },
+    {
+      "name": "unsupported_major_version",
+      "description": "Major version 1. Majors are not forward compatible by construction, so this is a rejection and not an ignore: the sender needs to know.",
+      "datagram": "4c101100abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "major version 1 is not implemented"
+    },
+    {
+      "name": "higher_minor_version_is_accepted",
+      "description": "Minor version 9 from a peer ahead of us. This MUST parse. Together with the unknown-type rule below it is the whole forward-compatibility story: a newer peer may add message types and fields, and an older one keeps talking to it.",
+      "datagram": "4c091100abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "accept",
+      "reason": "minor versions are forward compatible",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 9,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "unknown_message_type",
+      "description": "Type 0x99 is not assigned. The required outcome is IGNORE, not reject. This is the rule that makes minor-version additions safe: an implementation that rejects here turns every future message type into a compatibility break, and it will look perfectly healthy until the day someone ships one.",
+      "datagram": "4c019900abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "ignore",
+      "reason": "unassigned type codes are dropped silently"
+    },
+    {
+      "name": "vendor_message_type",
+      "description": "Type 0xF5 is in the vendor range the spec will never assign. Ignored exactly like any other unknown type \u2014 a receiver has no way to tell 'not mine' from 'not yet invented' and must not try.",
+      "datagram": "4c01f500abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "ignore",
+      "reason": "vendor codes are dropped silently"
+    },
+    {
+      "name": "payload_len_over_declares",
+      "description": "payload_len says 9, eight bytes are present. Trusting the declared length here is how a decoder reads into the AEAD tag.",
+      "datagram": "4c011100abcd010203040700000040e201000000000009000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "declared 9, available 8"
+    },
+    {
+      "name": "payload_len_under_declares",
+      "description": "payload_len says 7, eight bytes are present. The mirror case, and the one an implementation is more likely to wave through because nothing overruns.",
+      "datagram": "4c011100abcd010203040700000040e201000000000007000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "declared 7, available 8"
+    },
+    {
+      "name": "truncated_mid_header",
+      "description": "Twelve bytes: the datagram ends inside the header.",
+      "datagram": "4c011100abcd010203040700",
+      "expect": "reject",
+      "reason": "a header needs 24 bytes"
+    },
+    {
+      "name": "truncated_before_tag",
+      "description": "Header and payload complete, tag missing. Every datagram costs 40 bytes of overhead and a receiver may not assume the tag is optional.",
+      "datagram": "4c011100abcd010203040700000040e201000000000008000100000000000000",
+      "expect": "reject",
+      "reason": "the 16-byte AEAD tag is absent"
+    },
+    {
+      "name": "declared_empty_payload_for_a_type_that_needs_one",
+      "description": "A well-formed 40-byte envelope declaring payload_len 0 for a SYNC_REQ, which needs eight. Framing succeeds and the payload decode is what must fail \u2014 an implementation that only validates the envelope passes this and then reads uninitialised memory for t1.",
+      "datagram": "4c011100abcd010203040700000040e20100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "SYNC_REQ needs 8 payload bytes and none are present"
+    },
+    {
+      "name": "empty_datagram",
+      "description": "Zero bytes. A UDP socket can deliver this.",
+      "datagram": "",
+      "expect": "reject",
+      "reason": "nothing to decode"
+    },
+    {
+      "name": "src_push_priority_200_without_expiry",
+      "description": "The one that matters. A source at priority 200 with flags bit0 clear would sit above the ambient floor forever, and the failure mode has a name: stuck red at 3am. It MUST be rejected at the wire level, so no client can create the condition even by accident, and so a device cannot be talked into it by a buggy controller.",
+      "datagram": "4c013000abcd010203040700000040e20100000000003a000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d0011223344556677c8000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "priority 200 above the ambient floor with no expiry"
+    },
+    {
+      "name": "src_push_priority_1_without_expiry",
+      "description": "Priority 1 is the boundary: the ambient floor is priority 0 and nothing above it may be immortal. An implementation that checked for some higher threshold passes the priority-200 case and fails here.",
+      "datagram": "4c013000abcd010203040700000040e20100000000003a000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d001122334455667701000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "priority 1 is above the ambient floor"
+    },
+    {
+      "name": "reserved_bytes_are_ignored_not_rejected",
+      "description": "An ACTIVATE whose reserved byte is 0xFF. Reserved fields are zero on send and IGNORED on receive; rejecting them would make every future use of that byte a breaking change. Decode only: re-encoding zeroes the byte, which is correct and is why this is not a round-trip case.",
+      "datagram": "4c012000abcd010203040700000040e20100000000000c00090003ff4d00000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "accept",
+      "reason": "reserved fields are never a rejection",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 32,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 12
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 9,
+          "slot": 3,
+          "activate_at": 77
+        }
+      }
+    },
+    {
+      "name": "trailing_bytes_after_a_payload",
+      "description": "A SYNC_REQ with a ninth payload byte, as a peer one minor version ahead would send after appending a field. Trailing bytes are not an error. Decode only, for the same reason as above.",
+      "datagram": "4c011100abcd010203040700000040e20100000000000900010000000000000099aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "accept",
+      "reason": "a newer peer may have appended a field",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 9
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "tick_wall_quality_out_of_range",
+      "description": "wall_quality 4. Unlike a reserved byte this is a defined field with a closed set of values, and guessing at an unknown one would let a schedule fire against a clock nobody vouched for.",
+      "datagram": "4c011000abcd010203040700000040e20100000000002c0000000000000000000102030405060708090a0b0c0d0e0f100100000001000000000000000000000004000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "wall_quality 4 is not defined"
+    },
+    {
+      "name": "frame_unknown_pixel_format",
+      "description": "Pixel format 7. The format decides bytes per pixel, so a decoder that shrugged here would not know where the payload ends.",
+      "datagram": "4c012400abcd010203040700000040e20100000000000b000100000007000100ff0000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "pixel format 7 is not defined"
+    },
+    {
+      "name": "frame_pixel_count_disagrees_with_data",
+      "description": "count 4 in RGB8 needs twelve pixel bytes; three are present.",
+      "datagram": "4c012400abcd010203040700000040e20100000000000b000100000000000400ff0000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "count and pixel data disagree"
+    },
+    {
+      "name": "timectl_unknown_mode",
+      "description": "mode 9. Acting on an unrecognised time-control mode is how an editor freezes a mesh it cannot then unfreeze.",
+      "datagram": "4c018200abcd010203040700000040e2010000000000100009000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "mode 9 is not defined"
+    },
+    {
+      "name": "event_kind_is_not_utf8",
+      "description": "The kind str declares two bytes, 0xFF 0xFE, which are not valid UTF-8. str is defined as UTF-8, so this is a rejection rather than a lossy decode.",
+      "datagram": "4c014000abcd010203040700000040e20100000000002f000102030405060708090a0b0c0d0e0f10ffeeddccbbaa9988776655443322110002fffe000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "kind is not valid UTF-8"
+    },
+    {
+      "name": "state_digest_count_exceeds_payload",
+      "description": "count 3 with one entry present. A decoder that allocated on count before checking the bytes is remotely steerable.",
+      "datagram": "4c015000abcd010203040700000040e20100000000001a0003000102030405060708090a0b0c0d0e0f100100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "3 entries declared, 1 present"
+    },
+    {
+      "name": "prog_begin_string_length_overruns",
+      "description": "device_class declares 64 bytes with 5 remaining. The length prefix is attacker-controlled and must be checked against what is left, never trusted.",
+      "datagram": "4c016000abcd010203040700000040e20100000000000e0001000000000000004073686f7274aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "reject",
+      "reason": "str length 64 exceeds the remaining payload"
+    }
+  ]
+}

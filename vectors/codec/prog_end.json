@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "message": "PROG_END",
+  "description": "Closes a transfer. The slot is valid only if the hash AND the signature verify: the hash proves the transfer was clean, the signature proves who sent it.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "A completed transfer with both fixed-size fields populated.",
+      "datagram": "4c016200abcd010203040700000040e201000000000062000101f0efeeedecebeae9e8e7e6e5e4e3e2e1e0dfdedddcdbdad9d8d7d6d5d4d3d2d1000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 98,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 98
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 257,
+          "sha256": "f0efeeedecebeae9e8e7e6e5e4e3e2e1e0dfdedddcdbdad9d8d7d6d5d4d3d2d1",
+          "sig": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+        }
+      }
+    },
+    {
+      "name": "all_zero_hash_and_signature",
+      "description": "All-zero bytes are a legal encoding and an invalid signature. The codec must carry them; verification rejects them later.",
+      "datagram": "4c016200abcd010203040700000040e201000000000062000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 98,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 98
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 0,
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  ],
+  "code": "0x62"
+}

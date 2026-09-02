@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "message": "TICK",
+  "description": "The timebase master's 1 Hz heartbeat. show_time_us is repeated from the header so a TICK is self-contained in a log.",
+  "cases": [
+    {
+      "name": "gps_locked_master",
+      "description": "A master with a GPS/RTC wall clock: the highest wall_quality, so receivers may fire wall-clock schedules.",
+      "datagram": "4c011000abcd010203040700000040e20100000000002c0040e20100000000000102030405060708090a0b0c0d0e0f10e80300000300000000401e18240a060003000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 16,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 44
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "show_time_us": 123456,
+          "master_uuid": "0102030405060708090a0b0c0d0e0f10",
+          "master_capacity": 1000,
+          "election_epoch": 3,
+          "wall_time_us": 1700000000000000,
+          "wall_quality": 3
+        }
+      }
+    },
+    {
+      "name": "wall_clock_unknown",
+      "description": "wall_quality 0 with wall_time_us 0. Schedules must degrade explicitly here rather than fire at a plausible-looking wrong moment, so the pair has to survive the codec intact.",
+      "datagram": "4c011000abcd010203040700000040e20100000000002c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 16,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 44
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "show_time_us": 0,
+          "master_uuid": "00000000000000000000000000000000",
+          "master_capacity": 0,
+          "election_epoch": 0,
+          "wall_time_us": 0,
+          "wall_quality": 0
+        }
+      }
+    },
+    {
+      "name": "app_supplied_wall_clock_at_epoch_maximum",
+      "description": "wall_quality 1 with every numeric field at its maximum, which catches a decoder that widened a field to a signed type.",
+      "datagram": "4c011000abcd0102030407000000ffffffffffffffff2c00ffffffffffffffffffeeddccbbaa99887766554433221100ffffffffffffffffffffffffffffffff01000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 16,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 18446744073709551615,
+          "payload_len": 44
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "show_time_us": 18446744073709551615,
+          "master_uuid": "ffeeddccbbaa99887766554433221100",
+          "master_capacity": 4294967295,
+          "election_epoch": 4294967295,
+          "wall_time_us": 18446744073709551615,
+          "wall_quality": 1
+        }
+      }
+    },
+    {
+      "name": "ntp_wall_clock",
+      "description": "wall_quality 2 \u2014 the common field case, an NTP-disciplined master.",
+      "datagram": "4c011000abcd0102030407000000404b4c00000000002c00404b4c0000000000deadbeefcafef00d0011223344556677fa0000000100000000401e18240a060002000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 16,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 5000000,
+          "payload_len": 44
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "show_time_us": 5000000,
+          "master_uuid": "deadbeefcafef00d0011223344556677",
+          "master_capacity": 250,
+          "election_epoch": 1,
+          "wall_time_us": 1700000000000000,
+          "wall_quality": 2
+        }
+      }
+    }
+  ],
+  "code": "0x10"
+}

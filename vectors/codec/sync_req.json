@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "message": "SYNC_REQ",
+  "description": "The client half of the two-way time exchange. t4 never travels: the requester records it locally.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "A request stamped with the requester's t1.",
+      "datagram": "4c011100abcd010203040700000040e2010000000000080040420f0000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1000000
+        }
+      }
+    },
+    {
+      "name": "t1_zero",
+      "description": "t1 of zero is a legal timestamp, not a missing one.",
+      "datagram": "4c011100abcd010203040700000040e201000000000008000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 0
+        }
+      }
+    },
+    {
+      "name": "t1_at_u64_max",
+      "description": "The full u64 range, which a decoder reading i64 gets wrong.",
+      "datagram": "4c011100abcd010203040700000040e20100000000000800ffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 18446744073709551615
+        }
+      }
+    }
+  ],
+  "code": "0x11"
+}

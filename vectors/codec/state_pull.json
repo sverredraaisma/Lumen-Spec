@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "message": "STATE_PULL",
+  "description": "The record ids a peer wants after diffing a digest.",
+  "cases": [
+    {
+      "name": "three_ids",
+      "description": "A pull for three records.",
+      "datagram": "4c015100abcd010203040700000040e2010000000000320003000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d0011223344556677aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 81,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 50
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "ids": [
+            "0102030405060708090a0b0c0d0e0f10",
+            "ffeeddccbbaa99887766554433221100",
+            "deadbeefcafef00d0011223344556677"
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty_pull",
+      "description": "Nothing to fetch: the digests already agreed. Sent rather than omitted so the round has a definite end.",
+      "datagram": "4c015100abcd010203040700000040e201000000000002000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 81,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 2
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "ids": []
+        }
+      }
+    }
+  ],
+  "code": "0x51"
+}

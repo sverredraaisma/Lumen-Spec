@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "message": "CHAN_RELEASE",
+  "description": "Voluntary hand-back. The two reserved bytes keep the payload aligned and leave room for a reason code.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "Releasing channel 7.",
+      "datagram": "4c012300abcd010203040700000040e2010000000000040007000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 35,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 4
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 7
+        }
+      }
+    },
+    {
+      "name": "channel_zero",
+      "description": "Channel 0 is an ordinary channel id, not a sentinel.",
+      "datagram": "4c012300abcd010203040700000040e2010000000000040000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 35,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 4
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 0
+        }
+      }
+    }
+  ],
+  "code": "0x23"
+}

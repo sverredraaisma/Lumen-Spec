@@ -7,4 +7,23 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[lib]
+name = "lumen_conformance"
+path = "src/lib.rs"
+
+[[bin]]
+name = "lumen-conformance"
+path = "src/main.rs"
+
+# The reference adapter lives under `adapters/` with the line-protocol
+# documentation it demonstrates, but builds as a target of this package so the
+# integration tests can spawn it through `CARGO_BIN_EXE_lumen-echo-adapter`.
+# A separate crate would need a path dependency back here for the same code and
+# would still not give the tests a binary path.
+[[bin]]
+name = "lumen-echo-adapter"
+path = "../adapters/echo/main.rs"
+
+# Deliberately empty, and worth keeping that way: the suite is the first thing
+# someone adopting the protocol runs, often on a machine with no network.
 [dependencies]

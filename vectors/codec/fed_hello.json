@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "message": "FED_HELLO",
+  "description": "Cross-mesh introduction. Meshes federate, they do not merge, so this carries an identity and a key rather than joining anything.",
+  "cases": [
+    {
+      "name": "named_mesh",
+      "description": "A mesh announcing itself with a capability bitmap and its federation public key.",
+      "datagram": "4c017000abcd010203040700000040e201000000000044000102030405060708090a0b0c0d0e0f100f57617265686f757365204e6f7274680f000000000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5daaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 112,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 68
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "mesh_id": "0102030405060708090a0b0c0d0e0f10",
+          "mesh_name": "Warehouse North",
+          "caps": 15,
+          "fed_pubkey": "000306090c0f1215181b1e2124272a2d303336393c3f4245484b4e5154575a5d"
+        }
+      }
+    },
+    {
+      "name": "unnamed_mesh_no_caps",
+      "description": "An empty name and no capabilities: minimal but well-formed.",
+      "datagram": "4c017000abcd010203040700000040e201000000000035000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 112,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 53
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "mesh_id": "00000000000000000000000000000000",
+          "mesh_name": "",
+          "caps": 0,
+          "fed_pubkey": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  ],
+  "code": "0x70"
+}

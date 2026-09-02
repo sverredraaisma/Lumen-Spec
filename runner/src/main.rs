@@ -1,11 +1,20 @@
-//! Conformance runner — skeleton (W1).
+//! `lumen-conformance` — the one shared runner.
 //!
-//! Drives an implementation adapter over a line protocol on stdin/stdout and
-//! compares its emitted actions against the vectors in `vectors/`.
+//! A shim: everything it does lives in the library, where it can be tested
+//! without a process boundary.
+
+use lumen_conformance::cli::{self, Options};
 
 fn main() {
-    println!(
-        "lumen-conformance {} — no vectors implemented yet",
-        env!("CARGO_PKG_VERSION")
-    );
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let options = match Options::parse(&args) {
+        Ok(options) => options,
+        Err(e) => {
+            eprintln!("lumen-conformance: {e}\n\n{}", cli::USAGE);
+            std::process::exit(cli::EXIT_USAGE);
+        }
+    };
+    let (output, code) = cli::execute(&options);
+    print!("{output}");
+    std::process::exit(code);
 }

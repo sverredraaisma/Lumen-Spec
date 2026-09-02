@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "message": "SRC_RENEW",
+  "description": "Extend a source's lease. Absolute show time again, so a renewal is idempotent under retransmission.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "Pushing the expiry out to a later show time.",
+      "datagram": "4c013100abcd010203040700000040e201000000000018000102030405060708090a0b0c0d0e0f10000e270700000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 49,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 24
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "0102030405060708090a0b0c0d0e0f10",
+          "expires_at": 120000000
+        }
+      }
+    },
+    {
+      "name": "renew_into_the_past",
+      "description": "An expiry already behind the current show time. The codec accepts it; the source stack is what must then retire the source rather than rendering it briefly.",
+      "datagram": "4c013100abcd010203040700000040e20100000000001800ffeeddccbbaa998877665544332211000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 49,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 24
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "ffeeddccbbaa99887766554433221100",
+          "expires_at": 0
+        }
+      }
+    }
+  ],
+  "code": "0x31"
+}

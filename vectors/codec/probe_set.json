@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "message": "PROBE_SET",
+  "description": "Arm a debug probe on one pixel of one program.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "Probe 1 watching pixel 40 of program 0x0101.",
+      "datagram": "4c018000abcd010203040700000040e201000000000008000101010028000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 128,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 257,
+          "probe_id": 1,
+          "pixel_index": 40
+        }
+      }
+    },
+    {
+      "name": "maximum_indices",
+      "description": "Every field at u16 max, with the two reserved bytes still zero.",
+      "datagram": "4c018000abcd010203040700000040e20100000000000800ffffffffffff0000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 128,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 65535,
+          "probe_id": 65535,
+          "pixel_index": 65535
+        }
+      }
+    }
+  ],
+  "code": "0x80"
+}

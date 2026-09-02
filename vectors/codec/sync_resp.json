@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "message": "SYNC_RESP",
+  "description": "The server half. t1 is echoed so the requester can match a response to its request without keeping per-request state.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "t1 echoed, t2 on arrival, t3 on send. Offset is ((t2-t1)+(t3-t4))/2.",
+      "datagram": "4c011200abcd010203040700000040e2010000000000180040420f0000000000d0430f000000000002440f0000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 18,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 24
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1000000,
+          "t2": 1000400,
+          "t3": 1000450
+        }
+      }
+    },
+    {
+      "name": "responder_clock_behind_requester",
+      "description": "t2 and t3 below t1 \u2014 a legal sample with a negative offset. A decoder that clamps at zero here silently breaks convergence.",
+      "datagram": "4c011200abcd010203040700000040e2010000000000180040548900000000000a000000000000001400000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 18,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 24
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 9000000,
+          "t2": 10,
+          "t3": 20
+        }
+      }
+    }
+  ],
+  "code": "0x12"
+}

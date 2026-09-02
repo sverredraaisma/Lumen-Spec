@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "message": "TIMECTL",
+  "description": "Editor control of the show clock. The lease is why a crashed editor cannot leave a mesh frozen: on lapse a device resumes free-running.",
+  "cases": [
+    {
+      "name": "run",
+      "description": "mode 0: resume free-running.",
+      "datagram": "4c018200abcd010203040700000040e2010000000000100000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 130,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "mode": 0,
+          "lease_ms": 0,
+          "target_show_time": 0
+        }
+      }
+    },
+    {
+      "name": "pause_with_lease",
+      "description": "mode 1 with a ten second lease.",
+      "datagram": "4c018200abcd010203040700000040e20100000000001000010000001027000080de800200000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 130,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "mode": 1,
+          "lease_ms": 10000,
+          "target_show_time": 42000000
+        }
+      }
+    },
+    {
+      "name": "step",
+      "description": "mode 2: advance one frame and pause again.",
+      "datagram": "4c018200abcd010203040700000040e2010000000000100002000000e80300009a1f810200000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 130,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "mode": 2,
+          "lease_ms": 1000,
+          "target_show_time": 42016666
+        }
+      }
+    },
+    {
+      "name": "set_to_target",
+      "description": "mode 3 with the target show time that gives the mode its meaning.",
+      "datagram": "4c018200abcd010203040700000040e2010000000000100003000000ffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 130,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "mode": 3,
+          "lease_ms": 4294967295,
+          "target_show_time": 18446744073709551615
+        }
+      }
+    }
+  ],
+  "code": "0x82"
+}

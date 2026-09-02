@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "message": "STATE_PUSH",
+  "description": "Signed records. The signature covers record_id || record_type || hlc || author || body, in that order \u2014 the one ordering a signer and a verifier must not disagree about.",
+  "cases": [
+    {
+      "name": "one_record",
+      "description": "A single record with a short body.",
+      "datagram": "4c015200abcd010203040700000040e20100000000006f0001000102030405060708090a0b0c0d0e0f10032a00000000000000ffeeddccbbaa9988776655443322110002007b7d000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 82,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 111
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "records": [
+            {
+              "record_id": "0102030405060708090a0b0c0d0e0f10",
+              "record_type": 3,
+              "hlc": 42,
+              "author": "ffeeddccbbaa99887766554433221100",
+              "body": "7b7d",
+              "sig": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "two_records_one_empty_body",
+      "description": "Records are variable length, so a decoder must walk them rather than stride a fixed size. An empty body is the case that catches a stride assumption.",
+      "datagram": "4c015200abcd010203040700000040e2010000000000dc000200ffeeddccbbaa9988776655443322110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000deadbeefcafef00d0011223344556677ffffffffffffffffff0102030405060708090a0b0c0d0e0f1004000badc0de000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 82,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 220
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "records": [
+            {
+              "record_id": "ffeeddccbbaa99887766554433221100",
+              "record_type": 0,
+              "hlc": 0,
+              "author": "00000000000000000000000000000000",
+              "body": "",
+              "sig": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            },
+            {
+              "record_id": "deadbeefcafef00d0011223344556677",
+              "record_type": 255,
+              "hlc": 18446744073709551615,
+              "author": "0102030405060708090a0b0c0d0e0f10",
+              "body": "0badc0de",
+              "sig": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty_push",
+      "description": "count 0. A legal answer to a pull for records that have since been deleted.",
+      "datagram": "4c015200abcd010203040700000040e201000000000002000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 82,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 2
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "records": []
+        }
+      }
+    }
+  ],
+  "code": "0x52"
+}

@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "message": "STATE_DIGEST",
+  "description": "The cheap half of a gossip round: record ids and their hybrid logical clocks, compared before any signature is verified.",
+  "cases": [
+    {
+      "name": "two_records",
+      "description": "A digest a peer can diff against its own.",
+      "datagram": "4c015000abcd010203040700000040e2010000000000320002000102030405060708090a0b0c0d0e0f10e803000000000000ffeeddccbbaa99887766554433221100ffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 80,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 50
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "entries": [
+            {
+              "record_id": "0102030405060708090a0b0c0d0e0f10",
+              "hlc": 1000
+            },
+            {
+              "record_id": "ffeeddccbbaa99887766554433221100",
+              "hlc": 18446744073709551615
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty_digest",
+      "description": "count 0 with no entries. A device holding no records still participates in gossip, and saying so is not the same as silence.",
+      "datagram": "4c015000abcd010203040700000040e201000000000002000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 80,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 2
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "entries": []
+        }
+      }
+    }
+  ],
+  "code": "0x50"
+}

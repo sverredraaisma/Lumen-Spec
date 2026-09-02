@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "message": "PROG_BEGIN",
+  "description": "Opens a program transfer. vm_min_version is the MINIMUM the program needs: instructions are append-only within a VM major version, so a firmware upgrade never invalidates a program already running.",
+  "cases": [
+    {
+      "name": "explicit_slot",
+      "description": "A transfer into a named slot for a known device class.",
+      "datagram": "4c016000abcd010203040700000040e2010000000000160001010102001000000d657370333263332d7374726970aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 96,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 22
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 257,
+          "slot": 1,
+          "vm_min_version": 2,
+          "total_len": 4096,
+          "device_class": "esp32c3-strip"
+        }
+      }
+    },
+    {
+      "name": "device_chooses_slot",
+      "description": "slot 0xFF: the device picks and reports the index back.",
+      "datagram": "4c016000abcd010203040700000040e20100000000000900ffffff00ffffffff00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 96,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 9
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 65535,
+          "slot": 255,
+          "vm_min_version": 0,
+          "total_len": 4294967295,
+          "device_class": ""
+        }
+      }
+    }
+  ],
+  "code": "0x60"
+}

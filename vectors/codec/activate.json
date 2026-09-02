@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "message": "ACTIVATE",
+  "description": "Scheduled program activation. Never 'go now': activate_at is a show time so the mesh switches together across a network hiccup.",
+  "cases": [
+    {
+      "name": "explicit_slot",
+      "description": "A controller naming a pool index it already knows from CAPS.",
+      "datagram": "4c012000abcd010203040700000040e20100000000000c00341202000087930300000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 32,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 12
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 4660,
+          "slot": 2,
+          "activate_at": 60000000
+        }
+      }
+    },
+    {
+      "name": "device_chooses_slot",
+      "description": "slot 0xFF asks the device to pick a free slot. This is what a controller should normally send rather than guessing at another device's memory.",
+      "datagram": "4c012000abcd010203040700000040e20100000000000c000100ff000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 32,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 12
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 1,
+          "slot": 255,
+          "activate_at": 0
+        }
+      }
+    },
+    {
+      "name": "maximum_program_id",
+      "description": "program_id at u16 max with activate_at at u64 max.",
+      "datagram": "4c012000abcd010203040700000040e20100000000000c00ffff0000ffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 32,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 12
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 65535,
+          "slot": 0,
+          "activate_at": 18446744073709551615
+        }
+      }
+    }
+  ],
+  "code": "0x20"
+}

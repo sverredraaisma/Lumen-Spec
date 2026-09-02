@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "message": "CHAN",
+  "description": "Latest-wins control data with hold. producer_seq is what lets a receiver drop a reordered packet from the current owner.",
+  "cases": [
+    {
+      "name": "small_payload",
+      "description": "Four bytes of channel data.",
+      "datagram": "4c012100abcd010203040700000040e20100000000000a0005002a000400deadbeefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 33,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 10
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 5,
+          "producer_seq": 42,
+          "payload": "deadbeef"
+        }
+      }
+    },
+    {
+      "name": "empty_payload",
+      "description": "A zero-length blob is legal and is not the same as no blob: the u16 length prefix is still on the wire.",
+      "datagram": "4c012100abcd010203040700000040e20100000000000600000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 33,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 6
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 0,
+          "producer_seq": 0,
+          "payload": ""
+        }
+      }
+    },
+    {
+      "name": "producer_seq_wraps",
+      "description": "producer_seq at u16 max, the value immediately before a wrap. Latest-wins comparison has to cope; the codec must not.",
+      "datagram": "4c012100abcd010203040700000040e20100000000000a00ffffffff040000ff00ffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 33,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 10
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "channel_id": 65535,
+          "producer_seq": 65535,
+          "payload": "00ff00ff"
+        }
+      }
+    }
+  ],
+  "code": "0x21"
+}

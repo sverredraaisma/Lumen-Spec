@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "message": "FED_EVENT",
+  "description": "An EVENT payload followed by the mesh it originated in. The nesting is literal: the same bytes an EVENT would carry, then one uuid.",
+  "cases": [
+    {
+      "name": "forwarded_motion_event",
+      "description": "An event relayed from a neighbouring mesh.",
+      "datagram": "4c017100abcd010203040700000040e201000000000043000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100066d6f74696f6e0000010000401e18240a0600deadbeefcafef00d0011223344556677aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 113,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 67
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "event": {
+            "event_id": "0102030405060708090a0b0c0d0e0f10",
+            "source_uuid": "ffeeddccbbaa99887766554433221100",
+            "kind": "motion",
+            "value": 65536,
+            "wall_time_us": 1700000000000000
+          },
+          "origin_mesh": "deadbeefcafef00d0011223344556677"
+        }
+      }
+    },
+    {
+      "name": "forwarded_event_with_empty_kind",
+      "description": "The variable-length str sits in the middle, so a decoder that strides a fixed offset to origin_mesh reads the wrong sixteen bytes.",
+      "datagram": "4c017100abcd010203040700000040e20100000000003d00000000000000000000000000000000000000000000000000000000000000000000ffffffff00000000000000000102030405060708090a0b0c0d0e0f10aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 113,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 61
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "event": {
+            "event_id": "00000000000000000000000000000000",
+            "source_uuid": "00000000000000000000000000000000",
+            "kind": "",
+            "value": -1,
+            "wall_time_us": 0
+          },
+          "origin_mesh": "0102030405060708090a0b0c0d0e0f10"
+        }
+      }
+    }
+  ],
+  "code": "0x71"
+}

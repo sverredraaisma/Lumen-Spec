@@ -1,0 +1,237 @@
+{
+  "schema": 1,
+  "message": "L1_HEADER",
+  "description": "The 24-byte L1 header at its documented offsets, plus the trailing AEAD tag. Payloads here are the smallest the protocol has so that any mismatch is unambiguously a framing bug.",
+  "cases": [
+    {
+      "name": "all_header_fields_distinct",
+      "description": "Every header field holds a different, recognisable value, so a decoder that reads one at the wrong offset cannot accidentally pass.",
+      "datagram": "4c011100abcd0102030444332211080706050403020108008877665544332211aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 287454020,
+          "show_time_us": 72623859790382856,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1234605616436508552
+        }
+      }
+    },
+    {
+      "name": "smallest_assigned_payload",
+      "description": "SYNC_REQ is the smallest payload the spec assigns: eight bytes between a 24-byte header and a 16-byte tag, for the 40 bytes of overhead the format costs on every datagram.",
+      "datagram": "4c011100abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "flags_encrypted",
+      "description": "flags bit0: payload is encrypted as well as authenticated.",
+      "datagram": "4c011101abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 1,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "flags_fragment_not_last",
+      "description": "flags bit1 without bit2: a fragment with more to come.",
+      "datagram": "4c011102abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 2,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "flags_last_fragment",
+      "description": "flags bits 1 and 2: the final fragment of a fragmented message.",
+      "datagram": "4c011106abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 6,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "flags_reserved_bits_set",
+      "description": "Bits 3-7 are reserved: ignored on receive, never a rejection. They survive a round trip because they are part of the byte, not of a meaning the decoder assigns.",
+      "datagram": "4c0111f8abcd010203040700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 248,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "sequence_wraps_at_u32_max",
+      "description": "sequence is per sender per boot and wraps; the codec must carry the top value unchanged rather than saturating it.",
+      "datagram": "4c011100abcd01020304ffffffff40e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 4294967295,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "show_time_at_u64_max",
+      "description": "show_time_us is a full u64. A decoder that reads it as i64 or as two u32s in the wrong order fails here.",
+      "datagram": "4c011100abcd0102030407000000ffffffffffffffff08000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 18446744073709551615,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "zero_prefixes",
+      "description": "mesh_prefix and sender_prefix of all zeroes are legal values, not absent ones.",
+      "datagram": "4c0111000000000000000700000040e201000000000008000100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "0000",
+          "sender_prefix": "00000000",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "t1": 1
+        }
+      }
+    },
+    {
+      "name": "tag_is_carried_opaquely",
+      "description": "The AEAD tag is 16 bytes the codec never interprets. It must survive a round trip byte for byte; this crate does not hold the mesh key.",
+      "datagram": "4c011100abcd010203040700000040e201000000000008000100000000000000000102030405060708090a0b0c0d0e0f",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 17,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "000102030405060708090a0b0c0d0e0f",
+        "payload": {
+          "t1": 1
+        }
+      }
+    }
+  ]
+}

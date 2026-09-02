@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "message": "EVENT",
+  "description": "A sensor or logical event. event_id is minted by the producer and never derived by a receiver, which is what lets every keeper compute the same action id and collapse duplicates.",
+  "cases": [
+    {
+      "name": "motion_detected",
+      "description": "value is Q16.16: 65536 raw is 1.0.",
+      "datagram": "4c014000abcd010203040700000040e201000000000033000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100066d6f74696f6e0000010000401e18240a0600aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 64,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 51
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "event_id": "0102030405060708090a0b0c0d0e0f10",
+          "source_uuid": "ffeeddccbbaa99887766554433221100",
+          "kind": "motion",
+          "value": 65536,
+          "wall_time_us": 1700000000000000
+        }
+      }
+    },
+    {
+      "name": "negative_q16_value",
+      "description": "A negative Q16.16 value, -1.5, as raw -98304. A decoder that read the field as u32 produces 4294868992 here.",
+      "datagram": "4c014000abcd010203040700000040e20100000000003e00ffeeddccbbaa99887766554433221100deadbeefcafef00d00112233445566771174656d70657261747572652e64656c74610080feff0000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 64,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 62
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "event_id": "ffeeddccbbaa99887766554433221100",
+          "source_uuid": "deadbeefcafef00d0011223344556677",
+          "kind": "temperature.delta",
+          "value": -98304,
+          "wall_time_us": 0
+        }
+      }
+    },
+    {
+      "name": "empty_kind_and_zero_value",
+      "description": "A zero-length str is a length byte of 0 followed by nothing.",
+      "datagram": "4c014000abcd010203040700000040e20100000000002d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 64,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 45
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "event_id": "00000000000000000000000000000000",
+          "source_uuid": "00000000000000000000000000000000",
+          "kind": "",
+          "value": 0,
+          "wall_time_us": 0
+        }
+      }
+    },
+    {
+      "name": "non_ascii_kind",
+      "description": "str is UTF-8 and the length prefix counts bytes, not characters. Ten characters, twelve bytes.",
+      "datagram": "4c014000abcd010203040700000040e20100000000003900deadbeefcafef00d00112233445566770102030405060708090a0b0c0d0e0f100c6265776567696e67c3a9c3a9ffffff7f0100000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 64,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 57
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "event_id": "deadbeefcafef00d0011223344556677",
+          "source_uuid": "0102030405060708090a0b0c0d0e0f10",
+          "kind": "beweging\u00e9\u00e9",
+          "value": 2147483647,
+          "wall_time_us": 1
+        }
+      }
+    }
+  ],
+  "code": "0x40"
+}

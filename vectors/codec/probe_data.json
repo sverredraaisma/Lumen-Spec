@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "message": "PROBE_DATA",
+  "description": "A probe sample, stamped with the show time of the frame it came from so the editor can line samples up against the timeline.",
+  "cases": [
+    {
+      "name": "positive_sample",
+      "description": "value is Q16.16; 32768 raw is 0.5.",
+      "datagram": "4c018100abcd010203040700000040e2010000000000100001002800008793030000000000800000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 129,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "probe_id": 1,
+          "pixel_index": 40,
+          "frame_show_time": 60000000,
+          "value": 32768
+        }
+      }
+    },
+    {
+      "name": "most_negative_q16",
+      "description": "i32::MIN, the value a decoder using a naive sign flip cannot represent.",
+      "datagram": "4c018100abcd010203040700000040e2010000000000100000000000000000000000000000000080aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 129,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "probe_id": 0,
+          "pixel_index": 0,
+          "frame_show_time": 0,
+          "value": -2147483648
+        }
+      }
+    }
+  ],
+  "code": "0x81"
+}

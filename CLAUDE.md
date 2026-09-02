@@ -5,7 +5,7 @@ ARGB mesh. **This repo is the product**; every other repo implements what is her
 
 - **Licence:** Apache-2.0 for code, CC-BY 4.0 for prose and vectors.
 - **Main branch:** `main`
-- **Status:** skeleton. Envelope IDL drafted; vectors land with W2 and W5.
+- **Status:** codec vectors and the runner are in; behavioural vectors land with W5.
 
 ## Stack
 
@@ -18,7 +18,8 @@ ARGB mesh. **This repo is the product**; every other repo implements what is her
 
 ```bash
 cargo test --workspace
-cargo run -p lumen-conformance -- --adapter "<path>" vectors/
+cargo run -p lumen-conformance -- --adapter "<cmd>" vectors/
+cargo run -p lumen-conformance -- --self-test vectors/       # schema-check the corpus
 cargo clippy --workspace --all-targets       # CI runs with -D warnings
 cargo fmt --all -- --check
 cargo llvm-cov --workspace --summary-only    # coverage; must be >= 95%
@@ -34,6 +35,11 @@ cargo llvm-cov --workspace --summary-only    # coverage; must be >= 95%
 | `vectors/behavioural/` | event sequence → expected actions |
 | `runner/` | the one shared runner |
 | `adapters/` | the line protocol, and a reference adapter |
+
+The reference adapter is a **fixture**, not an implementation: it answers from
+the corpus and holds no codec, because a second codec here would become the de
+facto normative one and `lumen-spec` must not depend on `lumen-core`.
+`adapters/README.md` explains the trade.
 
 ## Hard rules
 

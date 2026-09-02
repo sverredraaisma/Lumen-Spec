@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "message": "FED_CUE",
+  "description": "A cross-mesh cue, scheduled against WALL time. Federated meshes have independent timebases, so this is coarse by construction and the field name says so.",
+  "cases": [
+    {
+      "name": "named_cue",
+      "description": "A cue with a wall-clock instant.",
+      "datagram": "4c017200abcd010203040700000040e201000000000025000c6163742d74776f2d6f70656e00401e18240a06000102030405060708090a0b0c0d0e0f10aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 114,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 37
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "cue_name": "act-two-open",
+          "wall_at_us": 1700000000000000,
+          "origin_mesh": "0102030405060708090a0b0c0d0e0f10"
+        }
+      }
+    },
+    {
+      "name": "empty_cue_name",
+      "description": "A zero-length name \u2014 legal on the wire, and something the layer above should refuse to act on.",
+      "datagram": "4c017200abcd010203040700000040e2010000000000190000000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 114,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 25
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "cue_name": "",
+          "wall_at_us": 0,
+          "origin_mesh": "00000000000000000000000000000000"
+        }
+      }
+    }
+  ],
+  "code": "0x72"
+}

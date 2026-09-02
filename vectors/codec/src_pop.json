@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "message": "SRC_POP",
+  "description": "Remove a source, fading rather than cutting.",
+  "cases": [
+    {
+      "name": "typical",
+      "description": "A one second fade out.",
+      "datagram": "4c013200abcd010203040700000040e201000000000012000102030405060708090a0b0c0d0e0f10e803aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 50,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 18
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "0102030405060708090a0b0c0d0e0f10",
+          "fade_out_ms": 1000
+        }
+      }
+    },
+    {
+      "name": "instant_pop",
+      "description": "fade_out_ms 0 is a hard cut, which is a choice the caller is allowed to make.",
+      "datagram": "4c013200abcd010203040700000040e20100000000001200deadbeefcafef00d00112233445566770000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 50,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 18
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "source_id": "deadbeefcafef00d0011223344556677",
+          "fade_out_ms": 0
+        }
+      }
+    }
+  ],
+  "code": "0x32"
+}

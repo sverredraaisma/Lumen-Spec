@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "message": "PROG_CHUNK",
+  "description": "One piece of a program image. offset is absolute within the image, so chunks may arrive out of order.",
+  "cases": [
+    {
+      "name": "first_chunk",
+      "description": "Offset 0 with eight bytes of bytecode.",
+      "datagram": "4c016100abcd010203040700000040e2010000000000100001010000000008000011223344556677aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 97,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 16
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 257,
+          "offset": 0,
+          "data": "0011223344556677"
+        }
+      }
+    },
+    {
+      "name": "chunk_at_high_offset",
+      "description": "A chunk near the u32 ceiling, which a decoder holding offset in a u16 cannot represent.",
+      "datagram": "4c016100abcd010203040700000040e20100000000000900010000ffffff0100ffaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 97,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 9
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 1,
+          "offset": 4294967040,
+          "data": "ff"
+        }
+      }
+    },
+    {
+      "name": "empty_chunk",
+      "description": "A zero-length chunk. Wasteful but legal, and a decoder that treats an empty blob as end-of-message loses the rest of the datagram.",
+      "datagram": "4c016100abcd010203040700000040e201000000000008000200100000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "value": {
+        "header": {
+          "magic": 76,
+          "version_major": 0,
+          "version_minor": 1,
+          "type": 97,
+          "flags": 0,
+          "mesh_prefix": "abcd",
+          "sender_prefix": "01020304",
+          "sequence": 7,
+          "show_time_us": 123456,
+          "payload_len": 8
+        },
+        "tag": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "payload": {
+          "program_id": 2,
+          "offset": 16,
+          "data": ""
+        }
+      }
+    }
+  ],
+  "code": "0x61"
+}
