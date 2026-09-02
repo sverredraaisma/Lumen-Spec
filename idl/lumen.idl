@@ -164,11 +164,15 @@ struct SrcPush {                    // 0x30
 // that clock, so a source expires at the same instant everywhere regardless of
 // when each device received the push.
 //
-// A PUSH with priority > 0 and flags bit 0 clear MUST BE REJECTED. This is the
+// A PUSH with priority > 63 and flags bit 0 clear MUST BE REJECTED. This is the
 // "stuck red at 3am" rule enforced at the wire level, so no client can create
 // the condition even by accident. It is the case independent implementations
 // get wrong, because accepting everything looks perfectly healthy until it does
 // not.
+//
+// 63 is the top of the ambient band. A floor that had to expire would not be a
+// floor - something has to hold the lights when every show, override and alert
+// has gone, and that something cannot be on a timer.
 
 struct SrcRenew { uuid source_id; u64 expires_at; }    // 0x31
 struct SrcPop   { uuid source_id; u16 fade_out_ms; }   // 0x32

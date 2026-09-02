@@ -179,7 +179,9 @@ POP:    uuid source_id   u16 fade_out_ms
 
 Expiry is an **absolute show time**, not a duration — every device already shares that clock, so a source expires at the same instant everywhere regardless of when each device received the push.
 
-A `PUSH` with `priority > 0` and `flags` bit 0 clear must be **rejected**. This is the "stuck red at 3am" rule from [[-README#Cross-cutting rules]] enforced at the wire level, so no client can create the condition even by accident.
+A `PUSH` with `priority > 63` and `flags` bit 0 clear must be **rejected**. This is the "stuck red at 3am" rule from [[-README#Cross-cutting rules]] enforced at the wire level, so no client can create the condition even by accident.
+
+**63, not 0.** The priority bands in [[Runtime Model#The source stack]] give 0–63 to the default and ambient scene, and say of that band "never — this is the floor". A floor that had to expire would not be a floor: something has to hold the lights when every show, override and alert has gone, and that something cannot be on a timer. Earlier drafts of this document said `> 0`, which contradicted the band table and split the two implementations — the codec refused an ambient scene at priority 40 that the source stack accepted. The band table wins, because it is the more considered of the two.
 
 ### `EVENT` — 0x40
 

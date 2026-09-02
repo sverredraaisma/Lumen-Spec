@@ -103,14 +103,21 @@
       "description": "The one that matters. A source at priority 200 with flags bit0 clear would sit above the ambient floor forever, and the failure mode has a name: stuck red at 3am. It MUST be rejected at the wire level, so no client can create the condition even by accident, and so a device cannot be talked into it by a buggy controller.",
       "datagram": "4c013000abcd010203040700000040e20100000000003a000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d0011223344556677c8000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "expect": "reject",
-      "reason": "priority 200 above the ambient floor with no expiry"
+      "reason": "priority 200 above the ambient band with no expiry"
     },
     {
-      "name": "src_push_priority_1_without_expiry",
-      "description": "Priority 1 is the boundary: the ambient floor is priority 0 and nothing above it may be immortal. An implementation that checked for some higher threshold passes the priority-200 case and fails here.",
-      "datagram": "4c013000abcd010203040700000040e20100000000003a000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d001122334455667701000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "name": "src_push_priority_64_without_expiry",
+      "description": "The boundary. The ambient band is 0-63 and is the floor, so 64 is the first priority that must carry an expiry. An implementation that checked for some higher threshold passes the priority-200 case and fails here.",
+      "datagram": "4c013000abcd010203040700000040e20100000000003a000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d001122334455667740000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "expect": "reject",
-      "reason": "priority 1 is above the ambient floor"
+      "reason": "priority 64 is the first above the ambient band"
+    },
+    {
+      "name": "src_push_priority_63_without_expiry_is_the_floor",
+      "description": "The other side of the boundary, and the reason the threshold is 63 rather than 0. An ambient scene at priority 40 with no expiry is not a bug - it is the floor, and a floor that had to expire would not be one. Something has to hold the lights when every show, override and alert has gone. Decode only: this exercises the accept path of the same rule.",
+      "datagram": "4c013000abcd010203040700000040e20100000000003a000102030405060708090a0b0c0d0e0f10ffeeddccbbaa99887766554433221100deadbeefcafef00d00112233445566773f000000000000000000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expect": "accept",
+      "reason": "the ambient band never expires"
     },
     {
       "name": "reserved_bytes_are_ignored_not_rejected",
