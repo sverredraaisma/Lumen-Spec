@@ -3,9 +3,10 @@
 //! # What this is, and what it deliberately is not
 //!
 //! It answers protocol requests out of the vector corpus itself: a `decode` is a
-//! lookup by datagram, an `encode` is a lookup by decoded structure. It contains
-//! **no codec**. That is a choice, and it is worth being clear about why,
-//! because the obvious alternative looks better and is not.
+//! lookup by datagram, an `encode` is a lookup by decoded structure, and a
+//! behavioural replay hands the corpus's own expectations back. It contains
+//! **no codec and no state machines**. That is a choice, and it is worth being
+//! clear about why, because the obvious alternative looks better and is not.
 //!
 //! The obvious alternative is to link `lumen-proto` from `lumen-core` and let
 //! the reference adapter be a real implementation. Two things forbid it. The
@@ -23,12 +24,19 @@
 //! checks the corpus against its own schema and against the L1 header, and to
 //! the real adapters in the implementation repos.
 //!
+//! The behavioural half makes the point unusually plainly: an expectation may
+//! be a *bound* rather than a value, and this fixture answers with the smallest
+//! thing that satisfies it. An adapter that can do that is obviously not an
+//! implementation of anything.
+//!
 //! It is also the file to copy when writing one of those. The request loop below
-//! is the whole of the line protocol; replace the two lookups with calls into an
+//! is the whole of the line protocol; replace the lookups with calls into an
 //! implementation and the adapter is finished.
 
 use lumen_conformance::json::Json;
+use lumen_conformance::matcher;
 use lumen_conformance::proto::{is_noise, Request, Response};
+use lumen_conformance::scenario::Scenario;
 use lumen_conformance::vector::{self, Expect};
 use std::collections::HashMap;
 use std::io::{BufRead, Write};
@@ -53,6 +61,7 @@ fn main() {
 
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
+    let mut replay = Replay::default();
     for line in stdin.lock().lines() {
         let line = match line {
             Ok(line) => line,
@@ -62,7 +71,7 @@ fn main() {
             continue;
         }
         let response = match Request::parse(&line) {
-            Ok(request) => corpus.answer(&request),
+            Ok(request) => corpus.answer(&request, &mut replay),
             Err(e) => Response::Error(e),
         };
         // Flush every line: the runner is blocked waiting for it, so a buffered
@@ -81,16 +90,30 @@ fn fail(message: &str) -> ! {
     std::process::exit(2);
 }
 
-/// Everything the adapter knows: what each datagram decodes to, and what each
-/// structure encodes to.
+/// Everything the adapter knows: what each datagram decodes to, what each
+/// structure encodes to, and every scenario it can replay.
 #[derive(Default)]
 struct Corpus {
     decode: HashMap<String, Response>,
     encode: HashMap<String, String>,
+    scenarios: Vec<Scenario>,
+}
+
+/// Where a scenario replay has got to.
+///
+/// A `reset` narrows the corpus to the scenarios that start this way, and each
+/// `event` narrows it further to those that were expecting that event next.
+/// Narrowing rather than picking one up front is what keeps two scenarios with
+/// the same initial state from being confused for each other — which they
+/// would be, because the fixture cannot see the vector file it is answering.
+#[derive(Default)]
+struct Replay {
+    candidates: Vec<usize>,
+    step: usize,
 }
 
 impl Corpus {
-    fn answer(&self, request: &Request) -> Response {
+    fn answer(&self, request: &Request, replay: &mut Replay) -> Response {
         match request {
             Request::Hello => Response::Ok(Json::Object(vec![
                 (
@@ -104,6 +127,13 @@ impl Corpus {
                     "protocol".to_string(),
                     Json::Number(lumen_conformance::proto::PROTOCOL.to_string()),
                 ),
+                (
+                    "kinds".to_string(),
+                    Json::Array(vec![
+                        Json::String("codec".to_string()),
+                        Json::String("behavioural".to_string()),
+                    ]),
+                ),
             ])),
             Request::Decode { datagram } => match self.decode.get(datagram) {
                 Some(response) => response.clone(),
@@ -116,7 +146,56 @@ impl Corpus {
                 )])),
                 None => Response::Error("no vector for that structure".to_string()),
             },
+            Request::Reset { machine, state } => {
+                replay.step = 0;
+                replay.candidates = self
+                    .scenarios
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, s)| {
+                        s.machine == *machine
+                            && s.initial_state.to_canonical() == state.to_canonical()
+                    })
+                    .map(|(i, _)| i)
+                    .collect();
+                if replay.candidates.is_empty() {
+                    return Response::Error(format!("no scenario starts `{machine}` this way"));
+                }
+                Response::Ok(Json::Object(Vec::new()))
+            }
+            Request::Event { at_us, event } => self.replay_event(*at_us, event, replay),
         }
+    }
+
+    fn replay_event(&self, at_us: u64, event: &Json, replay: &mut Replay) -> Response {
+        let step = replay.step;
+        replay.candidates.retain(|i| {
+            self.scenarios[*i]
+                .steps
+                .get(step)
+                .is_some_and(|s| s.at_us == at_us && s.event.to_canonical() == event.to_canonical())
+        });
+        let Some(first) = replay.candidates.first() else {
+            return Response::Error(format!(
+                "no scenario has `{}` at {at_us} us as step {}",
+                event.to_compact(),
+                step + 1
+            ));
+        };
+        replay.step += 1;
+        // The expectation may be a bound rather than a value, so the fixture
+        // answers with the smallest thing that satisfies it. That it can do
+        // this at all is the clearest statement of what it is: a proof that the
+        // plumbing works, never a proof that a vector is right.
+        let actions: Vec<Json> = self.scenarios[*first].steps[step]
+            .expect
+            .iter()
+            .map(matcher::witness)
+            .collect();
+        Response::Ok(Json::Object(vec![(
+            "actions".to_string(),
+            Json::Array(actions),
+        )]))
     }
 }
 
@@ -133,7 +212,10 @@ fn load(dir: &str) -> Result<Corpus, String> {
 
     let mut corpus = Corpus::default();
     for file in &files {
-        for case in &file.cases {
+        if let Some(scenario) = file.scenario() {
+            corpus.scenarios.push(scenario.clone());
+        }
+        for case in file.cases() {
             let response = match (case.expect, &case.value) {
                 (Expect::Ignore, _) => Response::Ignore,
                 (Expect::Reject, _) => Response::Reject(

@@ -8,7 +8,8 @@
 use crate::adapter::Adapter;
 use crate::json;
 use crate::proto::{Request, Response};
-use crate::vector::{Case, Expect, VectorFile};
+use crate::scenario::{Scenario, Step};
+use crate::vector::{Case, Expect, VectorFile, Vectors};
 
 /// An adapter that replays canned answers in order.
 pub struct Scripted {
@@ -54,12 +55,41 @@ pub fn case_with(expect: Expect) -> Case {
     }
 }
 
-/// A file holding the given cases.
+/// A file holding the given codec cases.
 pub fn vector_file(cases: Vec<Case>) -> VectorFile {
     VectorFile {
         path: "t.json".to_string(),
         message: "TEST".to_string(),
         description: "d".to_string(),
-        cases,
+        vectors: Vectors::Codec(cases),
+    }
+}
+
+/// A behavioural file whose one scenario delivers `steps`.
+pub fn scenario_file(steps: Vec<Step>) -> VectorFile {
+    VectorFile {
+        path: "s.json".to_string(),
+        message: "node".to_string(),
+        description: "d".to_string(),
+        vectors: Vectors::Behavioural(Box::new(Scenario {
+            machine: "node".to_string(),
+            name: "s".to_string(),
+            initial_state: json::parse(r#"{"capacity":1}"#).unwrap(),
+            steps,
+        })),
+    }
+}
+
+/// A step delivering `tick` and requiring `expect`, written as JSON.
+pub fn step(at_us: u64, expect: &str) -> Step {
+    Step {
+        at_us,
+        event: json::parse(r#"{"event":"tick"}"#).unwrap(),
+        expect: json::parse(expect)
+            .unwrap()
+            .as_array()
+            .expect("expect is an array")
+            .to_vec(),
+        description: None,
     }
 }

@@ -1,0 +1,242 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "node",
+  "name": "sync_cold_start_converges",
+  "description": "A node that has just booted synchronises to the timebase master: one TICK starts the exchange, eight round trips inside the RTT filter converge, and the resulting correction is applied by slewing the rate rather than stepping the clock. The peer is 250 us ahead on a symmetric 400 us path, so a conforming implementation lands inside the +/-500 us target.",
+  "initial_state": {
+    "uuid": "11111111000000000000000000000000",
+    "capacity": 1000,
+    "mesh_id": "abcd0000000000000000000000000000",
+    "boot_counter": 1,
+    "now_us": 0
+  },
+  "steps": [
+    {
+      "at_us": 1000000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd0a0a0a0a0100000040420f00000000002c0040420f00000000000a0a0a0a000000000000000000000000d00700000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "the first TICK from the timebase master starts the exchange",
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1000400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a02000000d0430f0000000000180040420f000000000002440f000000000002440f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1000800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0300000060450f00000000001800d0430f000000000092450f000000000092450f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1001200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a04000000f0460f0000000000180060450f000000000022470f000000000022470f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1001600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0500000080480f00000000001800f0460f0000000000b2480f0000000000b2480f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1002000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a06000000104a0f0000000000180080480f0000000000424a0f0000000000424a0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1002400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a07000000a04b0f00000000001800104a0f0000000000d24b0f0000000000d24b0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1002800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a08000000304d0f00000000001800a04b0f0000000000624d0f0000000000624d0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1003200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a09000000c04e0f00000000001800304d0f0000000000f24e0f0000000000f24e0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "discipline",
+          "offset_us": 250
+        },
+        {
+          "action": "sync_acquired"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              3000000
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

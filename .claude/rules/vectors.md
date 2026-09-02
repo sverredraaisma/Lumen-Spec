@@ -16,10 +16,17 @@ A change here is a change to what every implementation must do, so it lands
   encoder and a decoder drift together.
 - **Behavioural vectors** are an event sequence and the actions expected out. They
   work because implementation cores are sans-IO; keep them free of timing, socket
-  and ordering assumptions the contract does not actually make.
+  and ordering assumptions the contract does not actually make. Where the spec
+  constrains a bound rather than a value — a timer deadline, a clock correction —
+  write a `$between` matcher, never the number one implementation computed.
 - One scenario per file, named for the behaviour, not for the bug number.
 - A hostile case is just a longer file. Split brain, clock step, keeper death
   mid-write — write them.
+- **Prove a behavioural vector can fail.** Run it against a real implementation,
+  then break one rule in a scratch copy and watch the right vector go red. A
+  vector that cannot fail passes, looks like coverage, and is not.
+- Do not ship a vector for behaviour that does not exist yet. It trains people to
+  ignore failures, which is the one habit a conformance suite cannot survive.
 
 ## Adding to the IDL
 

@@ -5,7 +5,8 @@ ARGB mesh. **This repo is the product**; every other repo implements what is her
 
 - **Licence:** Apache-2.0 for code, CC-BY 4.0 for prose and vectors.
 - **Main branch:** `main`
-- **Status:** codec vectors and the runner are in; behavioural vectors land with W5.
+- **Status:** codec and behavioural vectors are in, and the runner drives both.
+  Replication (W7) behaviour has no vectors yet — see `vectors/README.md`.
 
 ## Stack
 
@@ -32,7 +33,7 @@ cargo llvm-cov --workspace --summary-only    # coverage; must be >= 95%
 | `docs/` | the normative prose |
 | `idl/` | the wire IDL |
 | `vectors/codec/` | bytes ↔ structure, both directions |
-| `vectors/behavioural/` | event sequence → expected actions |
+| `vectors/behavioural/` | event sequence → expected actions, one scenario per file |
 | `runner/` | the one shared runner |
 | `adapters/` | the line protocol, and a reference adapter |
 

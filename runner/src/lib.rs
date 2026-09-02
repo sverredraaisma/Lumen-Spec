@@ -32,9 +32,11 @@ pub mod adapter;
 pub mod cli;
 pub mod hex;
 pub mod json;
+pub mod matcher;
 pub mod proto;
 pub mod report;
 pub mod run;
+pub mod scenario;
 pub mod vector;
 
 #[cfg(test)]

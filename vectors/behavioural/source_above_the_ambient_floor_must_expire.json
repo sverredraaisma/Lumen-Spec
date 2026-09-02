@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "sources",
+  "name": "source_above_the_ambient_floor_must_expire",
+  "description": "A source above the ambient floor with no expiry is refused, and one at the floor is admitted. Nothing may permanently capture a pixel: a dead publisher has to release its claim on its own.",
+  "initial_state": {
+    "budget": 100,
+    "max_concurrent": 3
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "push",
+        "id": "b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1",
+        "priority": 200,
+        "expires_at_us": null,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 10
+      },
+      "description": "the stuck-red-at-3am rule: an alert that never lets go",
+      "expect": [
+        {
+          "action": "refused",
+          "reason": "no_expiry",
+          "priority": 200
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "push",
+        "id": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1",
+        "priority": 64,
+        "expires_at_us": null,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 10
+      },
+      "description": "the first priority above the ambient band, refused for the same reason",
+      "expect": [
+        {
+          "action": "refused",
+          "reason": "no_expiry",
+          "priority": 64
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "push",
+        "id": "b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1",
+        "priority": 0,
+        "expires_at_us": null,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 10
+      },
+      "description": "the ambient floor is the one band that may omit an expiry",
+      "expect": [
+        {
+          "action": "admitted",
+          "id": "b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "node",
+  "name": "sync_discards_a_slow_sample",
+  "description": "One round trip in the middle of a cold start takes 2.5x the running minimum. It must be discarded and re-probed rather than folded in: the offset estimate assumes the request and the response took equally long, and that assumption fails worst on exactly the samples that are slow.",
+  "initial_state": {
+    "uuid": "11111111000000000000000000000000",
+    "capacity": 1000,
+    "mesh_id": "abcd0000000000000000000000000000",
+    "boot_counter": 1,
+    "now_us": 0
+  },
+  "steps": [
+    {
+      "at_us": 1000000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd0a0a0a0a0100000040420f00000000002c0040420f00000000000a0a0a0a000000000000000000000000d00700000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "the first TICK from the timebase master starts the exchange",
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1000400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a02000000d0430f0000000000180040420f000000000002440f000000000002440f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1000800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0300000060450f00000000001800d0430f000000000092450f000000000092450f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1001200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a04000000f0460f0000000000180060450f000000000022470f000000000022470f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1002200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a05000000d84a0f00000000001800f0460f0000000000de490f0000000000de490f000000000000000000000000000000000000000000"
+      },
+      "description": "2.5x the running minimum round trip: discarded, and probed again rather than given up on",
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1002600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a06000000684c0f00000000001800d84a0f00000000009a4c0f00000000009a4c0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1003000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a07000000f84d0f00000000001800684c0f00000000002a4e0f00000000002a4e0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1003400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a08000000884f0f00000000001800f84d0f0000000000ba4f0f0000000000ba4f0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1003800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0900000018510f00000000001800884f0f00000000004a510f00000000004a510f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1004200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0a000000a8520f0000000000180018510f0000000000da520f0000000000da520f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "discipline",
+          "offset_us": 250
+        },
+        {
+          "action": "sync_acquired"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              3000000
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

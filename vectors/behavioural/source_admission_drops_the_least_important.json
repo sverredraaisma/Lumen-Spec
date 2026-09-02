@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "sources",
+  "name": "source_admission_drops_the_least_important",
+  "description": "Under budget pressure admission runs highest priority first, so what gets dropped is always the least important thing — and it drops back in the moment the pressure lifts, because admission is re-run from scratch rather than incrementally.",
+  "initial_state": {
+    "budget": 100,
+    "max_concurrent": 3
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "push",
+        "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1",
+        "priority": 10,
+        "expires_at_us": null,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 60
+      },
+      "description": "an ambient scene using most of the budget",
+      "expect": [
+        {
+          "action": "admitted",
+          "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1"
+        }
+      ]
+    },
+    {
+      "at_us": 1000000,
+      "event": {
+        "event": "push",
+        "id": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1",
+        "priority": 200,
+        "expires_at_us": 4000000,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 60
+      },
+      "description": "an alert that cannot fit alongside it: the ambient scene drops out",
+      "expect": [
+        {
+          "action": "admitted",
+          "id": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2"
+        },
+        {
+          "action": "rejected",
+          "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1",
+          "cost": 60,
+          "spare": 40
+        }
+      ]
+    },
+    {
+      "at_us": 4000000,
+      "event": {
+        "event": "advance"
+      },
+      "description": "the alert lapses and the ambient scene is readmitted unprompted",
+      "expect": [
+        {
+          "action": "removed",
+          "id": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
+          "reason": "expired"
+        },
+        {
+          "action": "fade_finished",
+          "id": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2"
+        },
+        {
+          "action": "admitted",
+          "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1"
+        }
+      ]
+    }
+  ]
+}

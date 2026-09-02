@@ -9,7 +9,42 @@ use crate::json::{self, Json};
 
 /// Protocol revision the runner speaks. Sent in the handshake so a mismatch is
 /// a clear message rather than a puzzling parse failure ten lines later.
-pub const PROTOCOL: u64 = 1;
+///
+/// Revision 2 adds `reset` and `event`, the two verbs behavioural vectors need.
+/// It is a version bump rather than a silent extension because the addition is
+/// not detectable any other way: a revision-1 adapter handed a `reset` answers
+/// `error unknown request verb`, which is indistinguishable from a real bug in
+/// an adapter that meant to support it. Declaring [`Kind`]s in the handshake
+/// turns that into "this adapter does codec vectors only", which is a fact
+/// about the adapter rather than a failure.
+pub const PROTOCOL: u64 = 2;
+
+/// A class of vector an adapter is able to run.
+///
+/// Named on the wire so the runner can skip what an adapter cannot do instead
+/// of reporting it as broken. A codec-only adapter is a perfectly good adapter.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Kind {
+    Codec,
+    Behavioural,
+}
+
+impl Kind {
+    pub fn name(self) -> &'static str {
+        match self {
+            Kind::Codec => "codec",
+            Kind::Behavioural => "behavioural",
+        }
+    }
+
+    pub fn parse(text: &str) -> Option<Kind> {
+        match text {
+            "codec" => Some(Kind::Codec),
+            "behavioural" => Some(Kind::Behavioural),
+            _ => None,
+        }
+    }
+}
 
 /// What the runner asks an adapter to do.
 #[derive(Clone, Debug, PartialEq)]
@@ -20,6 +55,19 @@ pub enum Request {
     Decode { datagram: String },
     /// Encode this structure back to a datagram.
     Encode { value: Json },
+    /// Discard all state and build `machine` in the given starting condition.
+    ///
+    /// Named rather than implicit because a behavioural vector has to start
+    /// somewhere reproducible, and "whatever the last vector left behind" is
+    /// not that. The runner sends one before every scenario.
+    Reset { machine: String, state: Json },
+    /// Deliver `event` at `at_us` and answer with the actions it produced.
+    ///
+    /// Delivery and read-back are one exchange, not two. A separate `actions`
+    /// verb would buy nothing — the actions of one event are known the moment
+    /// it returns — and would cost every adapter a queue to hold them in,
+    /// which is state the sans-IO contract does not otherwise need.
+    Event { at_us: u64, event: Json },
 }
 
 impl Request {
@@ -29,6 +77,8 @@ impl Request {
             Request::Hello => "hello",
             Request::Decode { .. } => "decode",
             Request::Encode { .. } => "encode",
+            Request::Reset { .. } => "reset",
+            Request::Event { .. } => "event",
         }
     }
 
@@ -44,6 +94,14 @@ impl Request {
                 Json::String(datagram.clone()),
             )]),
             Request::Encode { value } => value.clone(),
+            Request::Reset { machine, state } => Json::Object(vec![
+                ("machine".to_string(), Json::String(machine.clone())),
+                ("state".to_string(), state.clone()),
+            ]),
+            Request::Event { at_us, event } => Json::Object(vec![
+                ("at_us".to_string(), Json::Number(at_us.to_string())),
+                ("event".to_string(), event.clone()),
+            ]),
         };
         format!("{} {}", self.verb(), body.to_compact())
     }
@@ -63,8 +121,43 @@ impl Request {
                 None => Err("`decode` needs a string field `datagram`".to_string()),
             },
             "encode" => Ok(Request::Encode { value }),
+            "reset" => match (
+                value.get("machine").and_then(Json::as_str),
+                value.get("state"),
+            ) {
+                (Some(machine), Some(state)) => Ok(Request::Reset {
+                    machine: machine.to_string(),
+                    state: state.clone(),
+                }),
+                _ => Err("`reset` needs a string `machine` and an object `state`".to_string()),
+            },
+            "event" => match (
+                value.get("at_us").and_then(Json::as_u64),
+                value.get("event"),
+            ) {
+                (Some(at_us), Some(event)) => Ok(Request::Event {
+                    at_us,
+                    event: event.clone(),
+                }),
+                _ => Err("`event` needs an integer `at_us` and an object `event`".to_string()),
+            },
             other => Err(format!("unknown request verb `{other}`")),
         }
+    }
+}
+
+/// The vector kinds an adapter claimed in its handshake.
+///
+/// An adapter that says nothing is a revision-1 adapter, and those all do codec
+/// vectors and nothing else. Assuming that is what lets the codec adapters
+/// written before this revision keep working untouched.
+pub fn kinds_from_hello(value: &Json) -> Vec<Kind> {
+    match value.get("kinds").and_then(Json::as_array) {
+        None => vec![Kind::Codec],
+        Some(items) => items
+            .iter()
+            .filter_map(|item| item.as_str().and_then(Kind::parse))
+            .collect(),
     }
 }
 
@@ -165,6 +258,14 @@ mod tests {
             Request::Encode {
                 value: obj(&[("header", obj(&[("type", Json::Number("17".into()))]))]),
             },
+            Request::Reset {
+                machine: "node".to_string(),
+                state: obj(&[("capacity", Json::Number("1000".into()))]),
+            },
+            Request::Event {
+                at_us: 3_000_000,
+                event: obj(&[("event", Json::String("tick".into()))]),
+            },
         ];
         for request in requests {
             let line = request.to_line();
@@ -174,7 +275,7 @@ mod tests {
 
     #[test]
     fn the_handshake_carries_the_protocol_revision() {
-        assert_eq!(Request::Hello.to_line(), r#"hello {"protocol":1}"#);
+        assert_eq!(Request::Hello.to_line(), r#"hello {"protocol":2}"#);
         assert_eq!(Request::Hello.verb(), "hello");
         assert_eq!(
             Request::Decode {
@@ -182,6 +283,26 @@ mod tests {
             }
             .to_line(),
             r#"decode {"datagram":"ab"}"#
+        );
+    }
+
+    #[test]
+    fn the_behavioural_verbs_spell_themselves_the_way_the_documentation_does() {
+        assert_eq!(
+            Request::Reset {
+                machine: "sources".into(),
+                state: obj(&[("budget", Json::Number("100".into()))]),
+            }
+            .to_line(),
+            r#"reset {"machine":"sources","state":{"budget":100}}"#
+        );
+        assert_eq!(
+            Request::Event {
+                at_us: 5,
+                event: obj(&[("event", Json::String("tick".into()))]),
+            }
+            .to_line(),
+            r#"event {"at_us":5,"event":{"event":"tick"}}"#
         );
     }
 
@@ -194,9 +315,45 @@ mod tests {
             "decode {}",
             r#"decode {"datagram":7}"#,
             r#"frobnicate {"a":1}"#,
+            "reset {}",
+            r#"reset {"machine":"node"}"#,
+            r#"reset {"machine":7,"state":{}}"#,
+            "event {}",
+            r#"event {"at_us":1}"#,
+            r#"event {"at_us":-1,"event":{}}"#,
         ] {
             assert!(Request::parse(bad).is_err(), "`{bad}` should not parse");
         }
+    }
+
+    #[test]
+    fn an_adapter_that_names_no_kinds_is_taken_for_a_codec_adapter() {
+        // The compatibility rule the version bump rests on: every adapter
+        // written against revision 1 does codec vectors and says nothing.
+        assert_eq!(kinds_from_hello(&obj(&[])), vec![Kind::Codec]);
+        let both = obj(&[(
+            "kinds",
+            Json::Array(vec![
+                Json::String("codec".into()),
+                Json::String("behavioural".into()),
+            ]),
+        )]);
+        assert_eq!(
+            kinds_from_hello(&both),
+            vec![Kind::Codec, Kind::Behavioural]
+        );
+        // A kind this runner does not know is dropped rather than fatal: a
+        // newer adapter must be able to advertise more than we ask for.
+        let unknown = obj(&[("kinds", Json::Array(vec![Json::String("psychic".into())]))]);
+        assert!(kinds_from_hello(&unknown).is_empty());
+    }
+
+    #[test]
+    fn every_kind_names_itself_and_parses_back() {
+        for kind in [Kind::Codec, Kind::Behavioural] {
+            assert_eq!(Kind::parse(kind.name()), Some(kind));
+        }
+        assert_eq!(Kind::parse("nonsense"), None);
     }
 
     #[test]

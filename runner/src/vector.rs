@@ -10,9 +10,18 @@
 //! protocol, so knowing it costs the runner no per-message knowledge, and it
 //! catches the mistake a vector author actually makes: editing the decoded
 //! structure and forgetting the hex, or the reverse.
+//!
+//! # Two kinds in one tree
+//!
+//! A file's `kind` selects the body: `"codec"` (the default, so every file
+//! written before behavioural vectors existed still reads) gives [`Case`]s, and
+//! `"behavioural"` gives a [`Scenario`]. They live in one tree and load through
+//! one function because an implementer runs one command and gets one verdict;
+//! splitting them would mean two corpora that can be at two different revisions.
 
 use crate::hex;
 use crate::json::{self, Json};
+use crate::scenario::Scenario;
 use std::path::{Path, PathBuf};
 
 /// Bytes of L1 header on every datagram.
@@ -79,19 +88,61 @@ pub struct Case {
     pub reason: Option<String>,
 }
 
-/// One vector file: the cases for one message type.
+/// The body of a vector file, according to its `kind`.
+#[derive(Clone, Debug)]
+pub enum Vectors {
+    /// `kind: "codec"` — bytes against structure, both directions.
+    Codec(Vec<Case>),
+    /// `kind: "behavioural"` — events in, actions out.
+    Behavioural(Box<Scenario>),
+}
+
+/// One vector file: the cases for one message type, or one scenario.
 #[derive(Clone, Debug)]
 pub struct VectorFile {
     pub path: String,
+    /// The message name for a codec file, the machine name for a behavioural
+    /// one. Documentation and the first half of a check's id; **the runner
+    /// never switches on it**.
     pub message: String,
     pub description: String,
-    pub cases: Vec<Case>,
+    pub vectors: Vectors,
 }
 
 /// The schema version these files are written against.
 pub const SCHEMA: u64 = 1;
 
 impl VectorFile {
+    /// The codec cases, or nothing for a behavioural file.
+    pub fn cases(&self) -> &[Case] {
+        match &self.vectors {
+            Vectors::Codec(cases) => cases,
+            Vectors::Behavioural(_) => &[],
+        }
+    }
+
+    /// The scenario, or nothing for a codec file.
+    pub fn scenario(&self) -> Option<&Scenario> {
+        match &self.vectors {
+            Vectors::Codec(_) => None,
+            Vectors::Behavioural(scenario) => Some(scenario),
+        }
+    }
+
+    /// How many vectors this file holds, for the self-test tally. A scenario is
+    /// one, because it is checked as one thing: a divergence at step four says
+    /// nothing about step five, which never ran.
+    pub fn len(&self) -> usize {
+        match &self.vectors {
+            Vectors::Codec(cases) => cases.len(),
+            Vectors::Behavioural(_) => 1,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Parse and validate one file. Returns every problem found rather than the
     /// first, because a vector author fixing them one round trip at a time is
     /// how a suite stops being edited.
@@ -110,12 +161,32 @@ impl VectorFile {
             ))),
             None => problems.push(at("missing integer field `schema`")),
         }
-        let message = string_field(&doc, "message").unwrap_or_else(|| {
-            problems.push(at("missing string field `message`"));
-            String::new()
-        });
         let description = string_field(&doc, "description").unwrap_or_else(|| {
             problems.push(at("missing string field `description`"));
+            String::new()
+        });
+
+        // `kind` is absent on every file written before behavioural vectors
+        // existed, and defaulting it to codec is what keeps those readable
+        // rather than making the addition a corpus-wide edit.
+        match doc
+            .get("kind")
+            .map(|k| k.as_str().unwrap_or("<not a string>"))
+        {
+            None | Some("codec") => {}
+            Some("behavioural") => {
+                return finish_behavioural(path, &doc, description, problems);
+            }
+            Some(other) => {
+                problems.push(at(&format!(
+                    "`kind` must be `codec` or `behavioural`; found `{other}`"
+                )));
+                return Err(problems);
+            }
+        }
+
+        let message = string_field(&doc, "message").unwrap_or_else(|| {
+            problems.push(at("missing string field `message`"));
             String::new()
         });
 
@@ -151,9 +222,35 @@ impl VectorFile {
                 path: path.to_string(),
                 message,
                 description,
-                cases,
+                vectors: Vectors::Codec(cases),
             })
         } else {
+            Err(problems)
+        }
+    }
+}
+
+/// Finish parsing a `kind: "behavioural"` file.
+///
+/// Split out rather than inlined so the codec path reads as it did: the two
+/// bodies share only the envelope — `schema`, `kind` and `description` — and
+/// nothing else about them is common.
+fn finish_behavioural(
+    path: &str,
+    doc: &Json,
+    description: String,
+    mut problems: Vec<String>,
+) -> Result<VectorFile, Vec<String>> {
+    match Scenario::parse(doc) {
+        Ok(scenario) if problems.is_empty() => Ok(VectorFile {
+            path: path.to_string(),
+            message: scenario.machine.clone(),
+            description,
+            vectors: Vectors::Behavioural(Box::new(scenario)),
+        }),
+        Ok(_) => Err(problems),
+        Err(errs) => {
+            problems.extend(errs.into_iter().map(|e| format!("{path}: {e}")));
             Err(problems)
         }
     }
@@ -511,8 +608,8 @@ mod tests {
         assert_eq!(file.message, "TEST");
         assert_eq!(file.description, "d");
         assert_eq!(file.path, "t.json");
-        assert_eq!(file.cases.len(), 1);
-        let case = &file.cases[0];
+        assert_eq!(file.cases().len(), 1);
+        let case = &file.cases()[0];
         assert_eq!(case.expect, Expect::RoundTrip);
         assert_eq!(case.bytes.len(), HEADER_LEN + 1 + TAG_LEN);
         assert!(case.value.is_some());
@@ -540,9 +637,9 @@ mod tests {
             datagram(&[7], &[(0, b'X')])
         ))
         .unwrap();
-        assert_eq!(file.cases[0].expect, Expect::Reject);
-        assert_eq!(file.cases[0].reason.as_deref(), Some("why"));
-        assert!(file.cases[0].value.is_none());
+        assert_eq!(file.cases()[0].expect, Expect::Reject);
+        assert_eq!(file.cases()[0].reason.as_deref(), Some("why"));
+        assert!(file.cases()[0].value.is_none());
     }
 
     #[test]
@@ -753,6 +850,66 @@ mod tests {
             .replace("\"magic\":76", "\"magic\":88");
         let errs = file_with(&body).unwrap_err();
         assert!(errs.iter().any(|e| e.contains("magic byte")), "{errs:?}");
+    }
+
+    #[test]
+    fn a_behavioural_file_parses_into_a_scenario_and_counts_as_one_vector() {
+        let text = r#"{"schema":1,"kind":"behavioural","machine":"node","name":"s",
+                       "description":"d","initial_state":{"capacity":1},
+                       "steps":[{"at_us":0,"event":{"event":"tick"},"expect":[]}]}"#;
+        let file = VectorFile::parse("s.json", text).unwrap();
+        // The machine name takes the `message` slot, so a check id reads
+        // `node/s/behaviour` the way a codec one reads `TICK/gps/decode`.
+        assert_eq!(file.message, "node");
+        assert_eq!(file.description, "d");
+        assert!(file.cases().is_empty());
+        assert_eq!(file.scenario().map(|s| s.steps.len()), Some(1));
+        assert_eq!(file.len(), 1);
+        assert!(!file.is_empty());
+    }
+
+    #[test]
+    fn a_codec_file_carries_no_scenario_and_may_say_its_kind_explicitly() {
+        let text = format!(
+            r#"{{"schema":1,"kind":"codec","message":"TEST","description":"d","cases":[{}]}}"#,
+            round_trip_case()
+        );
+        let file = VectorFile::parse("t.json", &text).unwrap();
+        assert!(file.scenario().is_none());
+        assert_eq!(file.len(), 1);
+    }
+
+    #[test]
+    fn rejects_a_kind_it_does_not_understand() {
+        for kind in ["\"psychic\"", "7"] {
+            let text = format!(
+                r#"{{"schema":1,"kind":{kind},"message":"T","description":"d","cases":[]}}"#
+            );
+            let errs = VectorFile::parse("t.json", &text).unwrap_err();
+            assert!(
+                errs.iter().any(|e| e.contains("`kind` must be")),
+                "{errs:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_behavioural_file_reports_envelope_and_body_problems_together() {
+        // Envelope problems are found before the body is even looked at, and
+        // both have to reach the author in one pass.
+        let errs = VectorFile::parse("s.json", r#"{"kind":"behavioural"}"#).unwrap_err();
+        assert!(errs.iter().any(|e| e.contains("`schema`")), "{errs:?}");
+        assert!(errs.iter().any(|e| e.contains("`description`")), "{errs:?}");
+        assert!(errs.iter().any(|e| e.contains("`machine`")), "{errs:?}");
+        assert!(errs.iter().all(|e| e.starts_with("s.json: ")), "{errs:?}");
+
+        // A body that parses cleanly does not rescue a broken envelope.
+        let text = r#"{"kind":"behavioural","machine":"node","name":"s","description":"d",
+                       "initial_state":{},"steps":[{"at_us":0,"event":{"event":"t"},
+                                                    "expect":[]}]}"#;
+        let errs = VectorFile::parse("s.json", text).unwrap_err();
+        assert_eq!(errs.len(), 1, "{errs:?}");
+        assert!(errs[0].contains("`schema`"), "{errs:?}");
     }
 
     #[test]

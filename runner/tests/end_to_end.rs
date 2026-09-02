@@ -101,7 +101,7 @@ fn the_corpus_carries_the_rules_that_are_easy_to_get_wrong() {
         .expect("malformed.json");
     let named = |name: &str| {
         malformed
-            .cases
+            .cases()
             .iter()
             .find(|c| c.name == name)
             .unwrap_or_else(|| panic!("no case `{name}`"))
@@ -179,6 +179,96 @@ fn the_adapter_refuses_a_command_line_it_does_not_understand() {
     ] {
         let mut adapter = ChildAdapter::spawn(&command).expect("it starts, then exits");
         assert!(adapter.request(&Request::Hello).is_err(), "{command}");
+    }
+}
+
+#[test]
+fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
+    // `docs/wire-format.md` lists the scenarios worth shipping from the start.
+    // The two it names that are absent — the three-way partition and channel
+    // preemption — have no behaviour behind them yet; `vectors/README.md` says
+    // so rather than shipping a vector nothing can pass.
+    let files = load();
+    let scenarios: Vec<&str> = files
+        .iter()
+        .filter_map(|f| f.scenario().map(|s| s.name.as_str()))
+        .collect();
+    for name in [
+        "sync_cold_start_converges",
+        "sync_discards_a_slow_sample",
+        "master_vanishes_mid_show",
+        "equal_capacity_lower_uuid_wins",
+        "equal_capacity_higher_uuid_loses",
+        "leader_does_not_yield_to_a_worse_candidate",
+        "leader_yields_after_three_better_ticks",
+        "source_push_after_its_expiry_is_refused",
+        "source_above_the_ambient_floor_must_expire",
+        "source_stack_falls_back_as_each_source_expires",
+        "source_admission_drops_the_least_important",
+        "source_pop_fades_out_before_it_is_gone",
+    ] {
+        assert!(scenarios.contains(&name), "no behavioural vector `{name}`");
+    }
+
+    // Every machine a vector names has to be one an adapter can be expected to
+    // have. A typo here would be reported as "the adapter cannot build this
+    // initial state", which sends the reader to the wrong repo.
+    for file in &files {
+        if let Some(scenario) = file.scenario() {
+            assert!(
+                matches!(scenario.machine.as_str(), "node" | "sources"),
+                "{} names an unknown machine `{}`",
+                file.path,
+                scenario.machine
+            );
+            assert!(!scenario.steps.is_empty(), "{} has no steps", file.path);
+        }
+    }
+}
+
+#[test]
+fn a_behavioural_vector_asserts_that_nothing_else_happens() {
+    // The property the exhaustive comparison exists for. If no vector in the
+    // corpus ever expected an exact list, an implementation could emit a
+    // spurious action anywhere and still pass everything.
+    let files = load();
+    let steps: usize = files.iter().filter_map(VectorFileExt::scenario_steps).sum();
+    assert!(steps > 60, "only {steps} behavioural steps in the corpus");
+}
+
+trait VectorFileExt {
+    fn scenario_steps(&self) -> Option<usize>;
+}
+
+impl VectorFileExt for vector::VectorFile {
+    fn scenario_steps(&self) -> Option<usize> {
+        self.scenario().map(|s| s.steps.len())
+    }
+}
+
+#[test]
+fn the_reference_adapter_refuses_a_scenario_it_has_no_vector_for() {
+    // The fixture answers from the corpus, so a `reset` for something it has
+    // never seen has to say so rather than inventing an empty machine and
+    // reporting a wall of action mismatches.
+    let mut adapter = spawn(&vectors_dir());
+    let request = Request::Reset {
+        machine: "no-such-machine".to_string(),
+        state: lumen_conformance::json::parse("{}").unwrap(),
+    };
+    match adapter.request(&request) {
+        Ok(Response::Error(why)) => assert!(why.contains("no scenario"), "{why}"),
+        other => panic!("expected an error response, got {other:?}"),
+    }
+
+    // And an event that no scenario has at that point in its sequence.
+    let request = Request::Event {
+        at_us: 999_999_999,
+        event: lumen_conformance::json::parse(r#"{"event":"tick"}"#).unwrap(),
+    };
+    match adapter.request(&request) {
+        Ok(Response::Error(why)) => assert!(why.contains("no scenario has"), "{why}"),
+        other => panic!("expected an error response, got {other:?}"),
     }
 }
 

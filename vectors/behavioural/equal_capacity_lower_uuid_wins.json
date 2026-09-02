@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "node",
+  "name": "equal_capacity_lower_uuid_wins",
+  "description": "Two candidates with identical capacity. The tie breaks on the UUID and the lower one wins, so this node stands down. Every device computes the same answer from the same two candidacies, with no reference to anything local.",
+  "initial_state": {
+    "uuid": "11111111000000000000000000000000",
+    "capacity": 1000,
+    "mesh_id": "abcd0000000000000000000000000000",
+    "boot_counter": 1,
+    "now_us": 0
+  },
+  "steps": [
+    {
+      "at_us": 3000000,
+      "event": {
+        "event": "tick"
+      },
+      "description": "three seconds with no TICK: this node stands for election",
+      "expect": [
+        {
+          "action": "send",
+          "to": "mesh",
+          "datagram": {
+            "$starts_with": "4c011000abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 3100000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd0a0a0a0a01000000604d2f00000000002c00604d2f00000000000a0a0a0a000000000000000000000000e80300000000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "a rival candidacy at exactly this node's capacity",
+      "expect": [
+        {
+          "action": "role",
+          "role": "follower",
+          "epoch": 0
+        },
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5100000,
+      "event": {
+        "event": "tick"
+      },
+      "description": "the candidate settling timer expires",
+      "expect": [
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "node",
+  "name": "leader_yields_after_three_better_ticks",
+  "description": "A leader yields to a strictly better candidate, but only after three consecutive better TICKs, and a single worse TICK in between resets the count. Without the hysteresis a device rebooting with a marginally different benchmark score triggers a needless, visible handover.",
+  "initial_state": {
+    "uuid": "11111111000000000000000000000000",
+    "capacity": 1000,
+    "mesh_id": "abcd0000000000000000000000000000",
+    "boot_counter": 1,
+    "now_us": 0
+  },
+  "steps": [
+    {
+      "at_us": 3000000,
+      "event": {
+        "event": "tick"
+      },
+      "description": "stand for election",
+      "expect": [
+        {
+          "action": "send",
+          "to": "mesh",
+          "datagram": {
+            "$starts_with": "4c011000abcd11111111"
+          }
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5000000,
+      "event": {
+        "event": "tick"
+      },
+      "description": "unchallenged: take the timebase",
+      "expect": [
+        {
+          "action": "role",
+          "role": "leader",
+          "epoch": 1
+        },
+        {
+          "action": "send",
+          "to": "mesh",
+          "datagram": {
+            "$starts_with": "4c011000abcd11111111"
+          }
+        },
+        {
+          "action": "sync_acquired"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5100000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd2222222201000000e0d14d00000000002c00e0d14d000000000022222222000000000000000000000000e90300000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "better tick 1 of 3",
+      "expect": [
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5200000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd222222220200000080584f00000000002c0080584f000000000022222222000000000000000000000000e90300000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "better tick 2 of 3",
+      "expect": [
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5300000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd222222220300000020df5000000000002c0020df50000000000022222222000000000000000000000000e70300000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "one worse tick resets the count: the hysteresis is on *consecutive* ticks",
+      "expect": [
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5400000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd2222222204000000c0655200000000002c00c06552000000000022222222000000000000000000000000e90300000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "better tick 1 of 3, again",
+      "expect": [
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5500000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd222222220500000060ec5300000000002c0060ec53000000000022222222000000000000000000000000e90300000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "better tick 2 of 3",
+      "expect": [
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 5600000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011000abcd222222220600000000735500000000002c00007355000000000022222222000000000000000000000000e90300000100000000000000000000000000000000000000000000000000000000000000"
+      },
+      "description": "the third consecutive better tick: now the role moves",
+      "expect": [
+        {
+          "action": "role",
+          "role": "follower",
+          "epoch": 1
+        },
+        {
+          "action": "send",
+          "to": "22222222",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          }
+        },
+        {
+          "action": "sync_lost"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
