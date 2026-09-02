@@ -1,27 +1,247 @@
-// Lumen wire IDL — skeleton.
+// Lumen wire IDL — L1 header.
 //
-// Status: placeholder. W1 defines the envelope; message bodies land with W2
-// (`lumen-proto` codec) and must arrive together with codec vectors in
-// ../vectors/codec/.
+// NORMATIVE, but code generation is optional. `lumen-proto` in lumen-core stays
+// hand-written Rust; CI asserts it round-trips every vector in ../vectors/codec.
+// That catches drift — the actual failure mode — with no generator to maintain.
 //
-// Every message shares one envelope. The security fields exist from day one
-// even while unimplemented: adding them later is a breaking change to every
-// implementation that exists by then.
+// This file and ../docs/wire-format.md must agree. Where they do not, the prose
+// wins and this file is the bug.
+//
+// Conventions, from docs/wire-format.md:
+//   - little-endian throughout
+//   - u8 u16 u32 u64 i16 i32 are fixed-width integers
+//   - q16 is Q16.16 fixed point in an i32; value = raw / 65536
+//   - uuid is 16 bytes
+//   - str is a u8 length followed by that many UTF-8 bytes, max 255
+//   - blob is a u16 length followed by that many bytes
+//   - reserved fields are zero on send and IGNORED on receive, never rejected
+//   - times are show_time_us (u64) unless a field is named wall_*
 
-// version = protocol version for negotiation (see docs/protocol.md).
-// mesh_id  = which place this belongs to; meshes federate, they do not merge.
-// nonce/tag = AEAD under the mesh key.
+// ---------------------------------------------------------------------------
+// L1 header — every datagram, on every transport. 24 bytes, then the payload,
+// then a 16-byte AEAD tag. 40 bytes of overhead.
+// ---------------------------------------------------------------------------
 
-struct Envelope {
-    u8      version;
-    u8      msg_type;
-    u16     flags;
-    u64     mesh_id;
-    u64     src_device;
-    u64     show_time_us;   // monotonic show clock, never steps
-    u8[12]  nonce;
-    bytes   body;           // AEAD-protected
-    u8[16]  tag;
+struct Header {
+    u8      magic;          // 0x4C
+    u8      version;        // major << 4 | minor
+    u8      type;           // MsgType below; an unknown value is IGNORED
+    u8      flags;          // bit0 encrypted, bit1 fragment, bit2 last-fragment
+    u8[2]   mesh_prefix;    // first 2 bytes of mesh_id
+    u8[4]   sender_prefix;  // first 4 bytes of the sender uuid
+    u32     sequence;       // per sender, per boot
+    u64     show_time_us;   // when this payload is VALID, not when it was sent
+    u16     payload_len;
 }
 
-// enum MsgType { ... }   // W2
+// `show_time_us` sits in the header so a receiver can discard a late packet
+// without parsing or decrypting it. `mesh_prefix` lets a device on a shared LAN
+// drop another mesh's traffic on a two-byte comparison — the AEAD tag would
+// reject it anyway, but only after a wasted decrypt, and at 50 devices x 60 Hz
+// that waste is real.
+
+// The header is the AEAD associated data; the payload is the plaintext.
+// ChaCha20-Poly1305 under the mesh key. flags bit 0 selects encrypted-and-
+// authenticated versus authenticated-only — pixel data and audio bands are not
+// secret, and skipping the cipher on them saves cycles that matter on a C3.
+// Authentication is never optional.
+//
+// Nonce, 12 bytes: sender_prefix (4) || sequence (4) || boot_counter (4).
+//
+// boot_counter is stored in NVS and incremented on every boot. Without it a
+// device rebooting would restart its sequence at zero and reuse nonces under
+// the same key, which is the classic way to destroy a stream cipher.
+
+// ---------------------------------------------------------------------------
+// Message types. The high nibble is the category, which keeps dispatch a jump
+// table and leaves room to grow. AN UNKNOWN TYPE IS IGNORED, NOT AN ERROR —
+// that rule is what makes minor-version additions safe.
+// ---------------------------------------------------------------------------
+
+enum MsgType : u8 {
+    HELLO         = 0x01,   // payload not yet specified
+    CAPS          = 0x02,   // payload not yet specified
+    GET           = 0x03,   // payload not yet specified
+    SET           = 0x04,   // payload not yet specified
+
+    TICK          = 0x10,
+    SYNC_REQ      = 0x11,
+    SYNC_RESP     = 0x12,
+
+    ACTIVATE      = 0x20,
+    CHAN          = 0x21,
+    CHAN_CLAIM    = 0x22,
+    CHAN_RELEASE  = 0x23,
+    FRAME         = 0x24,
+
+    SRC_PUSH      = 0x30,
+    SRC_RENEW     = 0x31,
+    SRC_POP       = 0x32,
+
+    EVENT         = 0x40,
+
+    STATE_DIGEST  = 0x50,
+    STATE_PULL    = 0x51,
+    STATE_PUSH    = 0x52,
+
+    PROG_BEGIN    = 0x60,
+    PROG_CHUNK    = 0x61,
+    PROG_END      = 0x62,
+
+    FED_HELLO     = 0x70,
+    FED_EVENT     = 0x71,
+    FED_CUE       = 0x72,
+
+    PROBE_SET     = 0x80,
+    PROBE_DATA    = 0x81,
+    TIMECTL       = 0x82,
+
+    // 0xF0-0xFF are vendor / experimental and are never assigned by this spec.
+}
+
+// ---------------------------------------------------------------------------
+// Payloads
+// ---------------------------------------------------------------------------
+
+struct Tick {                       // 0x10, multicast, 1 Hz
+    u64     show_time_us;           // repeated, so a TICK is self-contained in logs
+    uuid    master_uuid;
+    u32     master_capacity;
+    u32     election_epoch;
+    u64     wall_time_us;           // 0 if the wall clock is unknown
+    u8      wall_quality;           // 0 none, 1 app-supplied, 2 NTP, 3 GPS/RTC
+    u8[3]   reserved;
+}
+
+struct SyncReq  { u64 t1; }         // 0x11
+struct SyncResp { u64 t1; u64 t2; u64 t3; }   // 0x12; t4 is recorded locally
+
+struct Activate {                   // 0x20
+    u16     program_id;
+    u8      slot;                   // pool index; 0xFF means "device chooses"
+    u8      reserved;
+    u64     activate_at;            // show time
+}
+
+struct Chan {                       // 0x21, latest-wins with hold
+    u16     channel_id;
+    u16     producer_seq;
+    blob    payload;
+}
+
+struct ChanClaim {                  // 0x22
+    u16     channel_id;
+    u8      priority;               // strictly greater preempts; equal does not
+    u8      reserved;
+    u32     lease_ms;
+}
+
+struct ChanRelease { u16 channel_id; u16 reserved; }   // 0x23
+
+struct Frame {                      // 0x24
+    u16     segment_id;
+    u16     offset;                 // first pixel index
+    u8      format;                 // 0 RGB8, 1 RGBW8, 2 RGB16, 3 CCT
+    u8      priority;
+    u16     count;
+    u8[]    pixels;                 // count * bytes-per-pixel
+}
+
+struct SrcPush {                    // 0x30
+    uuid    source_id;
+    uuid    zone_id;
+    uuid    scene_id;
+    u8      priority;
+    u8      flags;                  // bit0 has_expiry
+    u16     fade_in_ms;
+    u16     fade_out_ms;
+    u16     reserved;
+    u64     expires_at;             // ABSENT from the wire when flags bit0 is clear
+    blob    param_overrides;
+}
+
+// Expiry is an absolute show time, not a duration: every device already shares
+// that clock, so a source expires at the same instant everywhere regardless of
+// when each device received the push.
+//
+// A PUSH with priority > 0 and flags bit 0 clear MUST BE REJECTED. This is the
+// "stuck red at 3am" rule enforced at the wire level, so no client can create
+// the condition even by accident. It is the case independent implementations
+// get wrong, because accepting everything looks perfectly healthy until it does
+// not.
+
+struct SrcRenew { uuid source_id; u64 expires_at; }    // 0x31
+struct SrcPop   { uuid source_id; u16 fade_out_ms; }   // 0x32
+
+struct Event {                      // 0x40
+    uuid    event_id;               // minted by the producer, never derived
+    uuid    source_uuid;
+    str     kind;
+    q16     value;
+    u64     wall_time_us;           // 0 if unknown
+}
+
+// Producer-minted ids are what let every keeper compute the same action id and
+// collapse duplicate outbound calls.
+
+struct DigestEntry { uuid record_id; u64 hlc; }
+struct StateDigest { u16 count; DigestEntry[count] entries; }   // 0x50
+struct StatePull   { u16 count; uuid[count] ids; }              // 0x51
+
+struct StateRecord {
+    uuid    record_id;
+    u8      record_type;
+    u64     hlc;
+    uuid    author;
+    blob    body;
+    u8[64]  sig;
+}
+
+struct StatePush { u16 count; StateRecord[count] records; }     // 0x52
+
+// The signature covers record_id || record_type || hlc || author || body, in
+// that order. Verify only on change: the digest exchange compares HLCs first,
+// so steady-state gossip costs no signature checks.
+
+struct ProgBegin {                  // 0x60
+    u16     program_id;
+    u8      slot;
+    u8      vm_min_version;         // MINIMUM VM version this program requires
+    u32     total_len;
+    str     device_class;
+}
+
+struct ProgChunk { u16 program_id; u32 offset; blob data; }     // 0x61
+struct ProgEnd   { u16 program_id; u8[32] sha256; u8[64] sig; } // 0x62
+
+// A slot is valid only if the hash AND the signature verify: the hash proves the
+// transfer was clean, the signature proves who sent it.
+//
+// Instructions are append-only within a VM major version, so a device refuses
+// only programs needing more than it implements — a firmware upgrade never
+// invalidates a program already running.
+
+struct FedHello {                   // 0x70, cross-mesh
+    uuid    mesh_id;
+    str     mesh_name;
+    u32     caps;
+    u8[32]  fed_pubkey;
+}
+
+struct FedEvent { Event event; uuid origin_mesh; }              // 0x71
+
+struct FedCue {                     // 0x72
+    str     cue_name;
+    u64     wall_at_us;             // WALL time: federated meshes have
+    uuid    origin_mesh;            // independent timebases, so this is coarse
+}                                   // by construction and the name says so
+
+struct ProbeSet  { u16 program_id; u16 probe_id; u16 pixel_index; u16 reserved; }
+struct ProbeData { u16 probe_id; u16 pixel_index; u64 frame_show_time; q16 value; }
+
+struct TimeCtl {                    // 0x82
+    u8      mode;                   // 0 run, 1 pause, 2 step, 3 set
+    u8[3]   reserved;
+    u32     lease_ms;               // so a crashed editor cannot freeze a mesh
+    u64     target_show_time;
+}
