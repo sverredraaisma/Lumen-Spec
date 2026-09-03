@@ -227,7 +227,631 @@
         "event": "datagram",
         "bytes": "4c011200abcd0a0a0a0a09000000c04e0f00000000001800304d0f0000000000f24e0f0000000000f24e0f000000000000000000000000000000000000000000"
       },
-      "description": "the eighth sample lands: the node is synced and rendering",
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ],
+      "description": "the eighth sample lands: the node is synced and rendering"
+    },
+    {
+      "at_us": 1003600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0a00000050500f00000000001800c04e0f000000000082500f000000000082500f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1004000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0b000000e0510f0000000000180050500f000000000012520f000000000012520f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1004400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0c00000070530f00000000001800e0510f0000000000a2530f0000000000a2530f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1004800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0d00000000550f0000000000180070530f000000000032550f000000000032550f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1005200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0e00000090560f0000000000180000550f0000000000c2560f0000000000c2560f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1005600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a0f00000020580f0000000000180090560f000000000052580f000000000052580f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1006000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a10000000b0590f0000000000180020580f0000000000e2590f0000000000e2590f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1006400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a11000000405b0f00000000001800b0590f0000000000725b0f0000000000725b0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1006800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a12000000d05c0f00000000001800405b0f0000000000025d0f0000000000025d0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1007200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a13000000605e0f00000000001800d05c0f0000000000925e0f0000000000925e0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1007600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a14000000f05f0f00000000001800605e0f000000000022600f000000000022600f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1008000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1500000080610f00000000001800f05f0f0000000000b2610f0000000000b2610f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1008400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1600000010630f0000000000180080610f000000000042630f000000000042630f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1008800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a17000000a0640f0000000000180010630f0000000000d2640f0000000000d2640f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1009200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1800000030660f00000000001800a0640f000000000062660f000000000062660f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1009600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a19000000c0670f0000000000180030660f0000000000f2670f0000000000f2670f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1010000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1a00000050690f00000000001800c0670f000000000082690f000000000082690f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1010400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1b000000e06a0f0000000000180050690f0000000000126b0f0000000000126b0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1010800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1c000000706c0f00000000001800e06a0f0000000000a26c0f0000000000a26c0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1011200,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1d000000006e0f00000000001800706c0f0000000000326e0f0000000000326e0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1011600,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1e000000906f0f00000000001800006e0f0000000000c26f0f0000000000c26f0f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1012000,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a1f00000020710f00000000001800906f0f000000000052710f000000000052710f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1012400,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a20000000b0720f0000000000180020710f0000000000e2720f0000000000e2720f000000000000000000000000000000000000000000"
+      },
+      "expect": [
+        {
+          "action": "send",
+          "to": "0a0a0a0a",
+          "datagram": {
+            "$starts_with": "4c011100abcd11111111"
+          },
+          "transport": "datagram"
+        },
+        {
+          "action": "set_timer",
+          "in_us": {
+            "$between": [
+              1,
+              1000000
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 1012800,
+      "event": {
+        "event": "datagram",
+        "bytes": "4c011200abcd0a0a0a0a2100000040740f00000000001800b0720f000000000072740f000000000072740f000000000000000000000000000000000000000000"
+      },
       "expect": [
         {
           "action": "discipline",

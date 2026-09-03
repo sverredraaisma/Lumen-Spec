@@ -364,13 +364,78 @@ Written as the sans-IO transitions an implementation must reproduce ([[Tech Stac
 | State | Event | Action | Next |
 |---|---|---|---|
 | `Unsynced` | `TICK` seen | send `SYNC_REQ` | `Syncing` |
-| `Syncing` | `SYNC_RESP`, RTT ≤ 1.5× min | add sample | `Syncing` until 8 samples |
-| `Syncing` | 8 good samples | set offset, start drift fit | `Synced` |
+| `Syncing` | `SYNC_RESP`, RTT ≤ 1.5× min | add sample | `Syncing` until 32 samples |
+| `Syncing` | 32 good samples | set offset from the median, start drift fit | `Synced` |
 | `Synced` | 30 s elapsed | send `SYNC_REQ` | `Synced` |
 | `Synced` | 3 TICKs missed | — | `Unsynced`, start election |
 | any | offset correction needed | **slew the rate, never step** | — |
 
 Suppress tightly-synced shows while `Unsynced` rather than rendering them wrong.
+
+**A burst is 32 samples and the offset is their median.** Median rather than
+mean, because one surviving outlier drags a mean by an eighth of its error and a
+median not at all, and the RTT filter does not catch a path that is
+*consistently* asymmetric.
+
+Quickest-wins is the other standard answer — a round trip that was quick had less
+room to be asymmetric, and asymmetry is the whole error term. Measured against
+the median on identical samples, it wins decisively at short bursts, loses at
+long ones, and at 32 the two are indistinguishable:
+
+| burst | quickest p95 | median p95 |
+|---|---|---|
+| 8 | 1 475 µs | 2 500 µs |
+| **32** | **825 µs** | **850 µs** |
+| 128 | 1 500 µs | 1 225 µs |
+
+So the selector is not where the error is, and this specifies the median because
+that is what is implemented and it is the more robust of two equals at the length
+that matters. **The burst length is what moves the number**, and that is the
+change worth making.
+
+The 32 is measured rather than chosen ([[Spike S1]]). On two ESP32-C3s over a
+domestic AP:
+
+| burst | spans | p50 | p95 |
+|---|---|---|---|
+| 8 | 1.6 s | 325–425 µs | 1 475–1 500 µs |
+| **32** | 6.4 s | **225–300 µs** | **675–825 µs** |
+| 128 | 25.6 s | 875–925 µs | 1 500–1 775 µs |
+
+Ranges rather than single figures because the network moved between runs, which
+is itself the point: these are domestic conditions, not a lab.
+
+**Longer is not monotonically better, and an implementation that assumes it is
+will make things worse.** A follower's clock drifts on the order of 33 µs per
+second against the master's — an ordinary crystal, well within its own spec — so
+a 25 s burst accumulates around 800 µs of drift *inside itself*. Short bursts are
+limited by network noise, long ones by drift, and the optimum sits where those
+cross. Where it sits depends on the crystal rather than on the network, so a
+device with a better oscillator can use a longer burst and one with a worse
+oscillator must not.
+
+**Power save must be off** on any device holding this clock. A station left in
+the default mode parks its radio between the AP's beacons and wakes on DTIM,
+which quantises every exchange to the beacon interval: measured, that alone moved
+the minimum round trip from 4.3 ms to 17 ms and the 95th percentile error from
+1 250 µs to 5 000 µs. The power cost is real and belongs in the device's budget;
+it is not recoverable without giving up the shared clock.
+
+### How close is close enough
+
+The original target was ±500 µs at the 95th percentile. That figure was a guess
+at what "does not visibly tear" means, and measurement suggests it is about three
+times tighter than the requirement it stands for.
+
+What the design actually needs is that a wave crossing several devices does not
+tear, and the unit that matters there is a **frame**: 16 667 µs at 60 fps. The
+measured 675 µs p95 is 4% of a frame. Stating the requirement as a fraction of a
+frame rather than as an absolute keeps it meaningful at 30 fps as well, and stops
+the next reader spending real effort closing a gap that is not open.
+
+Devices still report their sync quality, and a show that genuinely needs tighter
+agreement than this can still refuse to run — that is what `Unsynced`
+suppression is for.
 
 ### Election — timebase, sim, keeper
 
