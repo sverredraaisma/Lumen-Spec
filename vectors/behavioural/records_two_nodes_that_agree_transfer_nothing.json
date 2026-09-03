@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "records",
+  "name": "records_two_nodes_that_agree_transfer_nothing",
+  "description": "The outcome of very nearly every gossip round: a mesh at rest compares digests every five seconds and finds nothing. It is why a digest is a compact list of ids and clocks rather than anything that has to be verified - a steady-state round costs no signature checks at all, which is what makes gossiping this often affordable on a device that is also rendering.",
+  "initial_state": {
+    "controllers": [
+      {
+        "id": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+        "key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+      }
+    ],
+    "devices": [
+      {
+        "id": "dadadadadadadadadadadadadadadada",
+        "key": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+      },
+      {
+        "id": "dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb",
+        "key": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "21212121212121212121212121212121",
+          "kind": 1,
+          "hlc": 20,
+          "author": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+          "body": "7468652d6365696c696e67",
+          "signature": "c54aaa9ec1ed08b4ff6c0e04abb3a36a16a1d3d41d9f4da6376a527ef1941edb551988cc724e883f53031e3773e97aea3ce86218e4c65eca7eb0a5cc1fdd2802"
+        }
+      },
+      "expect": [
+        {
+          "action": "accepted"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "reconcile",
+        "theirs": [
+          {
+            "id": "21212121212121212121212121212121",
+            "hlc": 20
+          }
+        ]
+      },
+      "expect": [
+        {
+          "action": "reconcile",
+          "pull": [],
+          "push": []
+        }
+      ],
+      "description": "an equal clock is the same record, so nothing moves"
+    }
+  ]
+}
