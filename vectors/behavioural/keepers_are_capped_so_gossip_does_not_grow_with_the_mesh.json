@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "keepers",
+  "name": "keepers_are_capped_so_gossip_does_not_grow_with_the_mesh",
+  "description": "Every keeper sends a digest every five seconds, so gossip traffic grows with the number of keepers rather than with the size of the mesh. The cap is what keeps a large installation from spending its bandwidth talking about itself. Five is the low end of the five-to-seven the data model allows, chosen because three is what makes a healed partition converge and two spare copies beyond that is enough for a house.",
+  "initial_state": {
+    "peers": [
+      {
+        "uuid": "01010101010101010101010101010101",
+        "flash_kib": 1001,
+        "capacity": 500
+      },
+      {
+        "uuid": "02020202020202020202020202020202",
+        "flash_kib": 1002,
+        "capacity": 500
+      },
+      {
+        "uuid": "03030303030303030303030303030303",
+        "flash_kib": 1003,
+        "capacity": 500
+      },
+      {
+        "uuid": "04040404040404040404040404040404",
+        "flash_kib": 1004,
+        "capacity": 500
+      },
+      {
+        "uuid": "05050505050505050505050505050505",
+        "flash_kib": 1005,
+        "capacity": 500
+      },
+      {
+        "uuid": "06060606060606060606060606060606",
+        "flash_kib": 1006,
+        "capacity": 500
+      },
+      {
+        "uuid": "07070707070707070707070707070707",
+        "flash_kib": 1007,
+        "capacity": 500
+      },
+      {
+        "uuid": "08080808080808080808080808080808",
+        "flash_kib": 1008,
+        "capacity": 500
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "select"
+      },
+      "description": "eight eligible devices, five keepers",
+      "expect": [
+        {
+          "action": "keepers",
+          "chosen": [
+            "08080808080808080808080808080808",
+            "07070707070707070707070707070707",
+            "06060606060606060606060606060606",
+            "05050505050505050505050505050505",
+            "04040404040404040404040404040404"
+          ],
+          "quorum": "healthy"
+        }
+      ]
+    }
+  ]
+}

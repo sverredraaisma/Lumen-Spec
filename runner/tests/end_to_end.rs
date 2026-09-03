@@ -230,6 +230,12 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
         "render_a_faulting_program_leaves_what_was_underneath",
         "render_a_pixel_no_source_covers_is_left_untouched",
         "render_a_source_the_stack_refused_does_not_reach_a_pixel",
+        // The keeper set is agreed by every device computing the same ranking,
+        // with no messages exchanged - so a disagreement has no protocol in
+        // which to be noticed, and the corpus is the only thing that can catch
+        // two implementations ranking differently.
+        "keeper_ranking_never_ties",
+        "a_bridged_device_is_never_a_keeper",
     ] {
         assert!(scenarios.contains(&name), "no behavioural vector `{name}`");
     }
@@ -242,7 +248,14 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
             assert!(
                 matches!(
                     scenario.machine.as_str(),
-                    "node" | "sources" | "channel" | "gateway" | "zone" | "records" | "render"
+                    "node"
+                        | "sources"
+                        | "channel"
+                        | "gateway"
+                        | "zone"
+                        | "records"
+                        | "render"
+                        | "keepers"
                 ),
                 "{} names an unknown machine `{}`",
                 file.path,

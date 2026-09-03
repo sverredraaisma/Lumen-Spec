@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "keepers",
+  "name": "a_bridged_device_is_never_a_keeper",
+  "description": "A bridged node reaches the mesh through another device, so keeping records there puts a hop in front of them and takes them offline whenever the bridge reboots. It is excluded however much flash it has - here it has more than everything else combined and still keeps nothing.",
+  "initial_state": {
+    "peers": [
+      {
+        "uuid": "01010101010101010101010101010101",
+        "flash_kib": 65536,
+        "capacity": 999,
+        "eligible": false
+      },
+      {
+        "uuid": "02020202020202020202020202020202",
+        "flash_kib": 512,
+        "capacity": 100
+      },
+      {
+        "uuid": "03030303030303030303030303030303",
+        "flash_kib": 256,
+        "capacity": 100
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "select"
+      },
+      "description": "the bridge is skipped despite having the most flash",
+      "expect": [
+        {
+          "action": "keepers",
+          "chosen": [
+            "02020202020202020202020202020202",
+            "03030303030303030303030303030303"
+          ],
+          "quorum": "thin"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "is_keeper",
+        "uuid": "01010101010101010101010101010101"
+      },
+      "description": "and knows it is not one",
+      "expect": [
+        {
+          "action": "is_keeper",
+          "keeper": false
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "is_keeper",
+        "uuid": "02020202020202020202020202020202"
+      },
+      "expect": [
+        {
+          "action": "is_keeper",
+          "keeper": true
+        }
+      ]
+    }
+  ]
+}

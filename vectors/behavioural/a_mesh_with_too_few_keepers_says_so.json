@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "keepers",
+  "name": "a_mesh_with_too_few_keepers_says_so",
+  "description": "With three or more keepers a partition that heals converges on HLC order by itself. With fewer it may not, and with one the show is lost if that device dies. Nothing in the protocol can fix that - the only cure is another mains-powered device - so the state machine's job is to report it loudly enough that an app can tell somebody. 'My lights forgot everything' is the worst failure this system has.",
+  "initial_state": {
+    "peers": [
+      {
+        "uuid": "01010101010101010101010101010101",
+        "flash_kib": 4096,
+        "capacity": 500
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "select"
+      },
+      "description": "one keeper is fragile, not healthy",
+      "expect": [
+        {
+          "action": "keepers",
+          "chosen": [
+            "01010101010101010101010101010101"
+          ],
+          "quorum": "fragile"
+        }
+      ]
+    }
+  ]
+}

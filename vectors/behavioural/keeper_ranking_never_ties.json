@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "keepers",
+  "name": "keeper_ranking_never_ties",
+  "description": "Two devices flashed from one binary are the normal case, not the corner one, and they report identical flash and identical capacity. The UUID breaks what is left. If this were a tie, two devices could sort the same peer table into different orders and disagree about the keeper set forever - which is the one failure this design has no protocol to detect, because it has no protocol at all.",
+  "initial_state": {
+    "peers": [
+      {
+        "uuid": "09090909090909090909090909090909",
+        "flash_kib": 2048,
+        "capacity": 500
+      },
+      {
+        "uuid": "02020202020202020202020202020202",
+        "flash_kib": 2048,
+        "capacity": 500
+      },
+      {
+        "uuid": "05050505050505050505050505050505",
+        "flash_kib": 2048,
+        "capacity": 500
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "select"
+      },
+      "description": "identical devices still order, lowest uuid first",
+      "expect": [
+        {
+          "action": "keepers",
+          "chosen": [
+            "02020202020202020202020202020202",
+            "05050505050505050505050505050505",
+            "09090909090909090909090909090909"
+          ],
+          "quorum": "healthy"
+        }
+      ]
+    }
+  ]
+}

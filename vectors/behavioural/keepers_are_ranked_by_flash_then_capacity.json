@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "keepers",
+  "name": "keepers_are_ranked_by_flash_then_capacity",
+  "description": "Keepers store the mesh's records, so room to store them ranks first: a device with flash is qualified for the job in a way a fast one without it is not. Capacity breaks the tie, because a keeper also answers pulls and a device already struggling to render should not also be serving state. There is no election protocol at all - the ranking is a pure function of the peer table, so every device reaches the same answer independently and no messages are exchanged.",
+  "initial_state": {
+    "peers": [
+      {
+        "uuid": "01010101010101010101010101010101",
+        "flash_kib": 512,
+        "capacity": 900
+      },
+      {
+        "uuid": "02020202020202020202020202020202",
+        "flash_kib": 4096,
+        "capacity": 100
+      },
+      {
+        "uuid": "03030303030303030303030303030303",
+        "flash_kib": 4096,
+        "capacity": 900
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "select"
+      },
+      "description": "most flash first, then most capacity",
+      "expect": [
+        {
+          "action": "keepers",
+          "chosen": [
+            "03030303030303030303030303030303",
+            "02020202020202020202020202020202",
+            "01010101010101010101010101010101"
+          ],
+          "quorum": "healthy"
+        }
+      ]
+    }
+  ]
+}
