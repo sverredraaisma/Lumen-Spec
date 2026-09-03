@@ -62,14 +62,17 @@ facto normative one and `lumen-spec` must not depend on `lumen-core`.
 
 > Living section. Add anything that cost real time.
 
-- **Local coverage does not work on this machine.** The `windows-gnu` toolchain
-  ships no profiler runtime, so `cargo llvm-cov` fails with "the compiler may have
-  been built without the profiler runtime". The gate that counts runs in CI on
-  Linux. Installing the VS Build Tools C++ workload fixes this and the linker.
+- **The "cannot link / no local coverage" note used to be wrong; both now work.**
+  `link.exe` was never missing. What was missing was the **Windows SDK**, so the
+  linker had no `kernel32.lib` to link against and Rust reported that as
+  "linker `link.exe` not found". Adding the SDK component to the existing VS
+  2022 install fixed the MSVC toolchain and `cargo llvm-cov` together. If a
+  fresh machine shows this symptom, install the C++ workload rather than
+  switching to `windows-gnu`: that workaround builds, which is why nobody
+  revisits it, and it silently costs you coverage because the `windows-gnu`
+  toolchain ships no profiler runtime.
 - **A codec vector that only tests one direction is nearly worthless** — an
   encoder and a decoder happily drift together. Always assert both.
-- **The default toolchain on this machine cannot link.** Use
-  `cargo +stable-x86_64-pc-windows-gnu ...`.
 
 ## Specialized guides (loaded on demand — do not preload)
 
