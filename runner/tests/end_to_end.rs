@@ -242,13 +242,7 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
             assert!(
                 matches!(
                     scenario.machine.as_str(),
-                    "node"
-                        | "sources"
-                        | "channel"
-                        | "gateway"
-                        | "zone"
-                        | "records"
-                        | "render"
+                    "node" | "sources" | "channel" | "gateway" | "zone" | "records" | "render"
                 ),
                 "{} names an unknown machine `{}`",
                 file.path,
