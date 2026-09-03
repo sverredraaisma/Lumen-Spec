@@ -6,5 +6,5 @@ members = ["runner"]
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/REPLACE-ME/lumen-spec"
+repository = "https://github.com/sverredraaisma/Lumen-Spec"
 rust-version = "1.85"
