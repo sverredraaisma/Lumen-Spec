@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "gateway",
+  "name": "gateway_clamps_priority_and_clips_pixels",
+  "description": "Art-Net, E1.31, DDP and plain MQTT arrive with no useful authentication, so the bound is enforced at the gateway rather than trusted from the source. A gateway that clamped nothing would turn every Art-Net node on the network into a way to take over a room. Priority is clamped rather than refused - a console sending 255 is a console doing what consoles do, and rejecting the frame leaves a strip dark with no explanation - but out-of-range pixels have no sensible reinterpretation, so they are dropped and counted. The expiry is a bound rather than a value: what the rule requires is that a gateway source always has one, not how long the shell chose to make it.",
+  "initial_state": {
+    "id": "11111111111111111111111111111111",
+    "protocol": "artnet",
+    "zone": "22222222222222222222222222222222",
+    "pixel_from": 10,
+    "pixel_to": 70,
+    "priority_ceiling": 100
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "ingress",
+        "source_id": "33333333333333333333333333333333",
+        "offset": 0,
+        "count": 170,
+        "priority": 255
+      },
+      "description": "a full Art-Net universe aimed at a 60-pixel binding: two thirds of it is not this gateway's to address, and the priority is far above its ceiling",
+      "expect": [
+        {
+          "action": "admitted",
+          "pixel_from": 10,
+          "pixel_to": 70,
+          "clipped": 110,
+          "priority": 100,
+          "priority_clamped": true,
+          "expires_at_us": {
+            "$between": [
+              1,
+              18446744073709551615
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "ingress",
+        "source_id": "33333333333333333333333333333333",
+        "offset": 20,
+        "count": 10,
+        "priority": 50
+      },
+      "description": "well inside the binding and under the ceiling, nothing is touched - the clamp must not fire when it is not needed",
+      "expect": [
+        {
+          "action": "admitted",
+          "pixel_from": 20,
+          "pixel_to": 30,
+          "clipped": 0,
+          "priority": 50,
+          "priority_clamped": false,
+          "expires_at_us": {
+            "$between": [
+              1,
+              18446744073709551615
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "ingress",
+        "source_id": "33333333333333333333333333333333",
+        "offset": 60,
+        "count": 40,
+        "priority": 100
+      },
+      "description": "overlapping the far edge: the part inside is kept and the rest counted, rather than the whole frame being refused",
+      "expect": [
+        {
+          "action": "admitted",
+          "pixel_from": 60,
+          "pixel_to": 70,
+          "clipped": 30,
+          "priority": 100,
+          "priority_clamped": false,
+          "expires_at_us": {
+            "$between": [
+              1,
+              18446744073709551615
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "ingress",
+        "source_id": "33333333333333333333333333333333",
+        "offset": 200,
+        "count": 10,
+        "priority": 10
+      },
+      "description": "entirely outside it there is nothing to clip to, so it is refused rather than admitted as an empty range",
+      "expect": [
+        {
+          "action": "refused",
+          "reason": "outside_binding"
+        }
+      ]
+    }
+  ]
+}

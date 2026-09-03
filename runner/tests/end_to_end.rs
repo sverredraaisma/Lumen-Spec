@@ -212,6 +212,15 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
         "channel_a_reordered_packet_from_the_owner_is_dropped",
         "channel_decays_toward_its_default_when_the_producer_dies",
         "channel_with_no_hold_never_goes_stale",
+        "gateway_clamps_priority_and_clips_pixels",
+        "gateway_never_accepts_a_program",
+        "gateway_refuses_a_binding_it_cannot_honour",
+        "gateway_an_empty_pixel_range_is_not_a_binding",
+        "zone_geometry_never_selects_a_synthetic_device",
+        "zone_geometry_skips_a_synthetic_device_but_naming_it_does_not",
+        "zone_naming_a_device_selects_it_however_it_is_mapped",
+        "zone_an_explicit_set_minus_a_geometric_exclusion",
+        "zone_a_named_device_can_be_narrowed_to_a_range_of_leds",
     ] {
         assert!(scenarios.contains(&name), "no behavioural vector `{name}`");
     }
@@ -222,7 +231,10 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
     for file in &files {
         if let Some(scenario) = file.scenario() {
             assert!(
-                matches!(scenario.machine.as_str(), "node" | "sources" | "channel"),
+                matches!(
+                    scenario.machine.as_str(),
+                    "node" | "sources" | "channel" | "gateway" | "zone"
+                ),
                 "{} names an unknown machine `{}`",
                 file.path,
                 scenario.machine

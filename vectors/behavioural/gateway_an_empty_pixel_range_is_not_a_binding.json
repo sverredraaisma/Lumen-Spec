@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "gateway",
+  "name": "gateway_an_empty_pixel_range_is_not_a_binding",
+  "description": "The range is half-open, so an inverted or empty one addresses nothing. Admitting against it would produce a source that owns no pixels and expires on a timer, which is a lease held for nothing and a row in an app's UI that can never do anything.",
+  "initial_state": {
+    "id": "11111111111111111111111111111111",
+    "protocol": "ddp",
+    "zone": "22222222222222222222222222222222",
+    "pixel_from": 60,
+    "pixel_to": 60,
+    "priority_ceiling": 100
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "ingress", "source_id": "33333333333333333333333333333333", "offset": 55, "count": 20, "priority": 10 },
+      "expect": [ { "action": "bad_binding", "reason": "empty_range" } ]
+    }
+  ]
+}

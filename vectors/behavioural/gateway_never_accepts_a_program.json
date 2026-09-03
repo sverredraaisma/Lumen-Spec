@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "gateway",
+  "name": "gateway_never_accepts_a_program",
+  "description": "The one thing an unauthenticated integration can never do. A program is signed code that runs on every device in the mesh; accepting one over a channel anybody on the network can speak would make the signing pointless. This is not a policy a binding can widen - there is no ceiling high enough - so it is pinned as its own vector rather than as a case of the priority rule.",
+  "initial_state": {
+    "id": "11111111111111111111111111111111",
+    "protocol": "artnet",
+    "zone": "22222222222222222222222222222222",
+    "pixel_from": 10,
+    "pixel_to": 70,
+    "priority_ceiling": 100
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "program"
+      },
+      "description": "not a question with two answers",
+      "expect": [
+        {
+          "action": "program_accepted",
+          "accepted": false
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "ceiling"
+      },
+      "description": "and the ceiling any binding may be given stops below the status bands, so nothing arriving this way can suppress an alert",
+      "expect": [
+        {
+          "action": "max_priority",
+          "max": 191
+        }
+      ]
+    }
+  ]
+}

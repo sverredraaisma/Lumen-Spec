@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "gateway",
+  "name": "gateway_refuses_a_binding_it_cannot_honour",
+  "description": "A binding above the status bands would let anything on the network suppress an alert, which is the one thing an unauthenticated source must never be able to do. The check is on the binding rather than on each frame, so a misconfiguration is caught when it is made instead of quietly working until the night it matters.",
+  "initial_state": {
+    "id": "11111111111111111111111111111111",
+    "protocol": "e131",
+    "zone": "22222222222222222222222222222222",
+    "pixel_from": 0,
+    "pixel_to": 100,
+    "priority_ceiling": 240
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "ingress", "source_id": "33333333333333333333333333333333", "offset": 0, "count": 10, "priority": 10 },
+      "description": "even a modest frame is refused, because the binding itself is the problem and clamping to an illegal ceiling would honour it",
+      "expect": [ { "action": "bad_binding", "reason": "ceiling_too_high", "asked": 240, "max": 191 } ]
+    }
+  ]
+}

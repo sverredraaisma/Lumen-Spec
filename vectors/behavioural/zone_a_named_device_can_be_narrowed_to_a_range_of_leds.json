@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "zone",
+  "name": "zone_a_named_device_can_be_narrowed_to_a_range_of_leds",
+  "description": "The range is half-open, like every other range in this protocol. Getting that wrong by one is the classic off-by-one, and it shows up as a single LED at a zone boundary that belongs to the wrong zone - visible, annoying, and easy to blame on the wiring instead.",
+  "initial_state": {
+    "zone": {
+      "id": "55555555555555555555555555555555",
+      "include": [
+        {
+          "clause": "device",
+          "device": "44444444444444444444444444444444",
+          "leds": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    "device": {
+      "device": "44444444444444444444444444444444",
+      "quality": "mapped",
+      "leds": [
+        {
+          "index": 0,
+          "world": [
+            0,
+            0,
+            0
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "world": [
+            0,
+            0,
+            16384
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "world": [
+            0,
+            0,
+            32768
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 3,
+          "world": [
+            0,
+            0,
+            49152
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "resolve"
+      },
+      "description": "1 and 2, not 3: the upper bound is excluded",
+      "expect": [
+        {
+          "action": "selected",
+          "leds": [
+            1,
+            2
+          ]
+        }
+      ]
+    }
+  ]
+}

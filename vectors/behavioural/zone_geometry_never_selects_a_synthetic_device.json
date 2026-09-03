@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "zone",
+  "name": "zone_geometry_never_selects_a_synthetic_device",
+  "description": "Every device has coordinates so that no feature needs an unmapped code path, but a synthetic device's are arbitrary. A geometric clause that matched them would select the device essentially at random, and random is indistinguishable from broken - a strip that joins 'the bottom of the room' one boot and not the next, with nothing to look at. Refusing to match is the behaviour that turns that into a question the app can answer.",
+  "initial_state": {
+    "zone": {
+      "id": "55555555555555555555555555555555",
+      "include": [
+        {
+          "clause": "where",
+          "predicate": "compare",
+          "axis": "z",
+          "op": "lt",
+          "value": 32768
+        }
+      ]
+    },
+    "device": {
+      "device": "44444444444444444444444444444444",
+      "quality": "mapped",
+      "leds": [
+        {
+          "index": 0,
+          "world": [
+            0,
+            0,
+            0
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "world": [
+            0,
+            0,
+            16384
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "world": [
+            0,
+            0,
+            32768
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 3,
+          "world": [
+            0,
+            0,
+            49152
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "resolve"
+      },
+      "description": "measured coordinates, so the predicate means something: the two LEDs below half a metre are selected",
+      "expect": [
+        {
+          "action": "selected",
+          "leds": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "why_excluded"
+      },
+      "description": "and nothing here is waiting on a mapping",
+      "expect": [
+        {
+          "action": "excluded_for_mapping",
+          "excluded": false
+        }
+      ]
+    }
+  ]
+}

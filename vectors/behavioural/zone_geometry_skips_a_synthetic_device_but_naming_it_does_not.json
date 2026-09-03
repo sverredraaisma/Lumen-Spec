@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "zone",
+  "name": "zone_geometry_skips_a_synthetic_device_but_naming_it_does_not",
+  "description": "The same zone against the same LED positions, differing only in whether those positions were ever measured. The geometric clause selects nothing; naming the device explicitly still selects it, because naming it is an unambiguous statement of intent regardless of where it thinks it is. An implementation that checked the coordinates without checking the quality passes the mapped case and fails here, which is the whole point of running both.",
+  "initial_state": {
+    "zone": {
+      "id": "55555555555555555555555555555555",
+      "include": [
+        {
+          "clause": "where",
+          "predicate": "compare",
+          "axis": "z",
+          "op": "lt",
+          "value": 32768
+        }
+      ]
+    },
+    "device": {
+      "device": "44444444444444444444444444444444",
+      "quality": "synthetic",
+      "leds": [
+        {
+          "index": 0,
+          "world": [
+            0,
+            0,
+            0
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "world": [
+            0,
+            0,
+            16384
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "world": [
+            0,
+            0,
+            32768
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 3,
+          "world": [
+            0,
+            0,
+            49152
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "resolve"
+      },
+      "description": "identical positions to the mapped case, and nothing is selected",
+      "expect": [
+        {
+          "action": "selected",
+          "leds": []
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "why_excluded"
+      },
+      "description": "and the device can say why, so an app can offer to place it instead of leaving 'why is that strip dark' unanswerable - with distributed evaluation nobody holds the answer centrally",
+      "expect": [
+        {
+          "action": "excluded_for_mapping",
+          "excluded": true
+        }
+      ]
+    }
+  ]
+}

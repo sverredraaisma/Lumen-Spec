@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "zone",
+  "name": "zone_an_explicit_set_minus_a_geometric_exclusion",
+  "description": "The combination that covers most real cases: name the strip, then cut the part that is behind the sofa. Exclusion is applied after inclusion and per LED, not per device, so a zone can take part of a strip without the strip having to be split into two devices.",
+  "initial_state": {
+    "zone": {
+      "id": "55555555555555555555555555555555",
+      "include": [
+        {
+          "clause": "device",
+          "device": "44444444444444444444444444444444"
+        }
+      ],
+      "exclude": [
+        {
+          "clause": "where",
+          "predicate": "compare",
+          "axis": "z",
+          "op": "lt",
+          "value": 32768
+        }
+      ]
+    },
+    "device": {
+      "device": "44444444444444444444444444444444",
+      "quality": "mapped",
+      "leds": [
+        {
+          "index": 0,
+          "world": [
+            0,
+            0,
+            0
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "world": [
+            0,
+            0,
+            16384
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "world": [
+            0,
+            0,
+            32768
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 3,
+          "world": [
+            0,
+            0,
+            49152
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "resolve"
+      },
+      "description": "the whole device, less the two LEDs the predicate covers",
+      "expect": [
+        {
+          "action": "selected",
+          "leds": [
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ]
+}

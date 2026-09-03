@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "zone",
+  "name": "zone_naming_a_device_selects_it_however_it_is_mapped",
+  "description": "The other half of the synthetic rule. 'This specific strip' has to keep working on a device nobody has placed, or every explicit zone would break the moment it included an unmapped device - and explicit sets are exactly what people reach for when the geometry is not trustworthy yet.",
+  "initial_state": {
+    "zone": {
+      "id": "55555555555555555555555555555555",
+      "include": [
+        {
+          "clause": "device",
+          "device": "44444444444444444444444444444444"
+        }
+      ]
+    },
+    "device": {
+      "device": "44444444444444444444444444444444",
+      "quality": "synthetic",
+      "leds": [
+        {
+          "index": 0,
+          "world": [
+            0,
+            0,
+            0
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 1,
+          "world": [
+            0,
+            0,
+            16384
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 2,
+          "world": [
+            0,
+            0,
+            32768
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "index": 3,
+          "world": [
+            0,
+            0,
+            49152
+          ],
+          "local": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "resolve"
+      },
+      "description": "every LED, on a device with arbitrary coordinates",
+      "expect": [
+        {
+          "action": "selected",
+          "leds": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "why_excluded"
+      },
+      "description": "and it is not excluded for mapping, because its mapping was never the question",
+      "expect": [
+        {
+          "action": "excluded_for_mapping",
+          "excluded": false
+        }
+      ]
+    }
+  ]
+}
