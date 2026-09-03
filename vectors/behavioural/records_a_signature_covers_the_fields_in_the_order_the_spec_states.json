@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "records",
+  "name": "records_a_signature_covers_the_fields_in_the_order_the_spec_states",
+  "description": "The signature covers record_id, record_type, hlc, author and body, in that order. Nothing else in the suite pins that, and getting it wrong is invisible from inside one implementation: it signs and verifies its own records perfectly and rejects every other implementation's, which reads as a network fault and is not. The signatures here were produced over exactly those bytes, so a different order fails this vector and nothing else.",
+  "initial_state": {
+    "controllers": [
+      {
+        "id": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+        "key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+      }
+    ],
+    "devices": [
+      {
+        "id": "dadadadadadadadadadadadadadadada",
+        "key": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+      },
+      {
+        "id": "dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb",
+        "key": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "21212121212121212121212121212121",
+          "kind": 1,
+          "hlc": 20,
+          "author": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+          "body": "7468652d6365696c696e67",
+          "signature": "c54aaa9ec1ed08b4ff6c0e04abb3a36a16a1d3d41d9f4da6376a527ef1941edb551988cc724e883f53031e3773e97aea3ce86218e4c65eca7eb0a5cc1fdd2802"
+        }
+      },
+      "description": "a zone record signed by an authorised controller",
+      "expect": [
+        {
+          "action": "accepted"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "digest"
+      },
+      "description": "and it is now something this node will tell its peers about",
+      "expect": [
+        {
+          "action": "digest",
+          "entries": [
+            {
+              "id": "21212121212121212121212121212121",
+              "hlc": 20
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

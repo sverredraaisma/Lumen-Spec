@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "records",
+  "name": "records_an_older_record_never_replaces_a_newer_one",
+  "description": "Gossip is unordered and repetitive, so the same record arrives many times and often late. Without the comparison a node that heard an old copy last would adopt it, tell its peers, and the mesh would flap between two versions of a zone indefinitely, each node convincing the next.",
+  "initial_state": {
+    "controllers": [
+      {
+        "id": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+        "key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+      }
+    ],
+    "devices": [
+      {
+        "id": "dadadadadadadadadadadadadadadada",
+        "key": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+      },
+      {
+        "id": "dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb",
+        "key": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "21212121212121212121212121212121",
+          "kind": 1,
+          "hlc": 20,
+          "author": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+          "body": "7468652d6365696c696e67",
+          "signature": "c54aaa9ec1ed08b4ff6c0e04abb3a36a16a1d3d41d9f4da6376a527ef1941edb551988cc724e883f53031e3773e97aea3ce86218e4c65eca7eb0a5cc1fdd2802"
+        }
+      },
+      "expect": [
+        {
+          "action": "accepted"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "21212121212121212121212121212121",
+          "kind": 1,
+          "hlc": 10,
+          "author": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+          "body": "6f6c6465722d6e616d65",
+          "signature": "3bf2d14375299df1211a991861f02bf78e0a8d573686c908a072285242fbd24e4628745a34e4a43733c7c02553a48ca98695256e8170cb7ab07577bd19dc2104"
+        }
+      },
+      "description": "an older copy of the same record, correctly signed, arriving late",
+      "expect": [
+        {
+          "action": "rejected",
+          "reason": "superseded"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "digest"
+      },
+      "description": "the newer one still stands",
+      "expect": [
+        {
+          "action": "digest",
+          "entries": [
+            {
+              "id": "21212121212121212121212121212121",
+              "hlc": 20
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "wanted",
+        "theirs": [
+          {
+            "id": "21212121212121212121212121212121",
+            "hlc": 10
+          },
+          {
+            "id": "53535353535353535353535353535353",
+            "hlc": 1
+          }
+        ]
+      },
+      "description": "and the diff asks only for what is actually newer: a peer offering an older zone is not worth a round trip, an unseen scene is. That is what keeps steady-state gossip free of signature checks.",
+      "expect": [
+        {
+          "action": "wanted",
+          "ids": [
+            "53535353535353535353535353535353"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "records",
+  "name": "records_a_device_may_only_sign_its_own_device_record",
+  "description": "A device signs its own device record with its identity key and nothing else. That is the deliberately small blast radius: a compromised renderer can lie about itself, and cannot rewrite another device's coordinates, push a scene or change a schedule. All three cases are here because an implementation that asked only 'is this a known device key' passes the first and fails the other two.",
+  "initial_state": {
+    "controllers": [
+      {
+        "id": "c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0",
+        "key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+      }
+    ],
+    "devices": [
+      {
+        "id": "dadadadadadadadadadadadadadadada",
+        "key": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+      },
+      {
+        "id": "dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb",
+        "key": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "dadadadadadadadadadadadadadadada",
+          "kind": 0,
+          "hlc": 5,
+          "author": "dadadadadadadadadadadadadadadada",
+          "body": "73747269702d61",
+          "signature": "6f052b64c5a134f1cd4ae7e429e662397222091282789c369d61aee46b1f3f4e0b2b7df0681ed6490f5b3bbce0598433393203a2eb612e839434a92d5de71100"
+        }
+      },
+      "description": "a device describing itself, signed by itself",
+      "expect": [
+        {
+          "action": "accepted"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "dadadadadadadadadadadadadadadada",
+          "kind": 0,
+          "hlc": 6,
+          "author": "dbdbdbdbdbdbdbdbdbdbdbdbdbdbdbdb",
+          "body": "73746f6c656e",
+          "signature": "7633dfaec1a53cf333d49764ef116557b6bb34f483fb639742e4154c94f31f8fb38fa023c3e05dbd007e99c15aebe0bebdc6d94b5a3a30b380481f2679baed0d"
+        }
+      },
+      "description": "device B rewriting device A, with a signature that verifies perfectly under B's own key. Only the authority rule catches this one.",
+      "expect": [
+        {
+          "action": "rejected",
+          "reason": "not_its_own_device_record"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "accept",
+        "wall_ms": 1000,
+        "record": {
+          "id": "53535353535353535353535353535353",
+          "kind": 3,
+          "hlc": 7,
+          "author": "dadadadadadadadadadadadadadadada",
+          "body": "6e6f7065",
+          "signature": "e5145682dbad8d951a2155376ade1257d9faf79b5a4b4d01140a24df54e76102d98a94807af0371604ab80ebb28993c6f0dd89069fa5cffa3f6efea0d2374d02"
+        }
+      },
+      "description": "and a device key signing a scene is a different failure from an unknown author, because the fix is different: this is a tampered node, not a missing pairing.",
+      "expect": [
+        {
+          "action": "rejected",
+          "reason": "wrong_authority"
+        }
+      ]
+    }
+  ]
+}

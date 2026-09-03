@@ -221,6 +221,11 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
         "zone_naming_a_device_selects_it_however_it_is_mapped",
         "zone_an_explicit_set_minus_a_geometric_exclusion",
         "zone_a_named_device_can_be_narrowed_to_a_range_of_leds",
+        "records_a_signature_covers_the_fields_in_the_order_the_spec_states",
+        "records_a_tampered_body_is_rejected_and_not_gossiped_onward",
+        "records_a_device_may_only_sign_its_own_device_record",
+        "records_an_unauthorised_author_is_rejected",
+        "records_an_older_record_never_replaces_a_newer_one",
     ] {
         assert!(scenarios.contains(&name), "no behavioural vector `{name}`");
     }
@@ -233,7 +238,7 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
             assert!(
                 matches!(
                     scenario.machine.as_str(),
-                    "node" | "sources" | "channel" | "gateway" | "zone"
+                    "node" | "sources" | "channel" | "gateway" | "zone" | "records"
                 ),
                 "{} names an unknown machine `{}`",
                 file.path,
