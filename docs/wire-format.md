@@ -22,7 +22,7 @@ off  size  field
 0    1     magic          0x4C
 1    1     version        major<<4 | minor
 2    1     type           message type, table below
-3    1     flags          bit0 encrypted, bit1 fragment, bit2 last-fragment, rest reserved
+3    1     flags          bit0 encrypted, bit1 fragment, bit2 last, bit3 first, rest reserved
 4    2     mesh_prefix    first 2 bytes of mesh_id
 6    4     sender_prefix  first 4 bytes of sender uuid
 10   4     sequence       per sender, per boot, increments every datagram
@@ -189,7 +189,7 @@ u16  count
 ...  pixel data
 ```
 
-Fragmentation uses header `flags` bits 1–2 when a segment exceeds the MTU.
+Fragmentation uses header `flags` bits 1–3 when a segment exceeds the MTU.
 
 ### Datagram size
 
@@ -211,14 +211,25 @@ would be 40 bytes wrong in exactly the case where it matters.
 ### Fragmentation
 
 A message too large for one datagram is split across several, using `flags` bit 1
-on every fragment and bit 2 on the last. Fragments of one message are
-**consecutive `sequence` values from the same sender**, so no fragment index or
-message id is needed: the header already carries everything reassembly requires,
-and adding a field for it would cost every datagram in the system four bytes to
-serve the rare one.
+on every fragment, bit 3 on the first and bit 2 on the last. Fragments of one
+message are **consecutive `sequence` values from the same sender**, so no
+fragment index or message id is needed: the header already carries everything
+reassembly requires, and adding a field for it would cost every datagram in the
+system four bytes to serve the rare one.
 
-A receiver reassembles by holding fragments until it sees one with bit 2 set. If
-a `sequence` is missing when that arrives, **the whole message is discarded**.
+**Bit 3 is not redundant, and leaving it out is unsound.** Without a mark on the
+first fragment, a receiver that misses the opening one cannot tell: it sees a
+fragment that continues nothing, begins a message with it, and on the last
+fragment delivers a **truncated message as though it were whole**. Nothing
+downstream can detect that — the payload is short, but a decoder cannot
+distinguish a short message from a truncated one in general. The flag costs a
+reserved bit rather than the four bytes an index would have cost, which is the
+same trade the paragraph above makes.
+
+A receiver reassembles by starting on a fragment with bit 3 set and holding
+fragments until it sees one with bit 2. If a `sequence` is missing when that
+arrives, or if a fragment arrives that neither starts a message nor continues the
+one in progress, **the whole message is discarded**.
 Waiting is not useful: the two things that fragment are a sim snapshot, which is
 replaced 60 times a second and will be superseded before a retransmission could
 arrive, and a state record, which travels over a reliable transport and does not
