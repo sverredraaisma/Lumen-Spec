@@ -208,6 +208,36 @@ The limit is on the whole datagram rather than on the payload inside it, because
 what has to survive the path is the packet, and a rule about the payload alone
 would be 40 bytes wrong in exactly the case where it matters.
 
+### Fragmentation
+
+A message too large for one datagram is split across several, using `flags` bit 1
+on every fragment and bit 2 on the last. Fragments of one message are
+**consecutive `sequence` values from the same sender**, so no fragment index or
+message id is needed: the header already carries everything reassembly requires,
+and adding a field for it would cost every datagram in the system four bytes to
+serve the rare one.
+
+A receiver reassembles by holding fragments until it sees one with bit 2 set. If
+a `sequence` is missing when that arrives, **the whole message is discarded**.
+Waiting is not useful: the two things that fragment are a sim snapshot, which is
+replaced 60 times a second and will be superseded before a retransmission could
+arrive, and a state record, which travels over a reliable transport and does not
+fragment on the wire at all.
+
+**A receiver that drops a fragmented message keeps what it had.** For a sim
+snapshot that means holding the last complete one rather than rendering a partial
+state or nothing — the simulation appears to pause for a frame, which at 60 Hz is
+invisible, where a partial state is a particle field with half its elements from
+this frame and half from the last, and nothing at all is a visible blink that
+reads as a fault. This is the same shape as the rule for a stale channel: hold
+first, and only then degrade.
+
+A reassembly buffer is bounded by the same rule as everything else here: a
+receiver may hold at most one incomplete message per sender, and a fragment that
+does not continue the message in progress replaces it. A sender that fragments
+two messages at once is not conforming, and a receiver must not grow memory
+waiting to find out.
+
 ### `SRC_PUSH` / `SRC_RENEW` / `SRC_POP` — 0x30–0x32
 
 ```
@@ -258,6 +288,12 @@ PUSH:   u16 count, then count × {
 
 Signature covers `record_id ‖ record_type ‖ hlc ‖ author ‖ body`. Verify only on change — the digest exchange compares HLCs first, so steady-state gossip costs no signature checks.
 
+**A `STATE_PUSH` carries at most 8 KiB of records, and never splits one.** As many whole records as fit under that go in a message and the rest follow in the next, so a gossip round stays responsive whatever any single record weighs. Without the cap one large `effect` record holds a round for as long as it takes to transfer, and a device that has just joined waits behind it before it can render anything.
+
+The bound is on the receiver as much as the sender: the device with the least memory in the mesh is the one that has to hold what arrives, and it is not usually the device that sent it. A record larger than the cap on its own is refused when it is authored rather than at gossip time, where the failure would be somebody else's device quietly falling behind.
+
+8 KiB rather than the datagram limit because this travels over the reliable transport, where framing costs little and a round trip costs a lot — sizing it to a datagram would mean a hundred messages to move a scene that could have gone in three.
+
 ### `PROG_BEGIN` / `PROG_CHUNK` / `PROG_END` — 0x60–0x62
 
 ```
@@ -292,6 +328,32 @@ TIMECTL:    u8 mode        0 run, 1 pause, 2 step, 3 set
 ```
 
 `TIMECTL` carries a lease so a crashed editor cannot leave a mesh frozen; on lapse a device resumes free-running ([[Desktop Application#Debugging effects]]).
+
+## Version policy
+
+The header carries `major << 4 | minor`.
+
+**A minor version only adds.** New message types, new fields appended to an
+existing payload, new `flags` bits. Every rule that makes this safe is already
+stated where it applies: an unknown message type is ignored rather than refused,
+a payload longer than expected is accepted and the excess ignored, and unknown
+`flags` bits are ignored. A device therefore talks to any device sharing its
+major version, in either direction, whichever is newer.
+
+**A device supports the current major and the one before it.** That is what lets
+a mesh be upgraded one device at a time, which is the only way it happens in a
+house: somebody flashes the strip they can reach and gets to the others when a
+ladder is free. A device meeting a major it does not implement ignores the
+traffic rather than erroring — it is not addressed to something it can be.
+
+Two majors back is not supported, and the difference is deliberate. Supporting
+one means every change has to work against exactly one older shape, which is
+testable; supporting two means every pair of adjacent versions has to keep
+working together, and the combinations grow faster than anybody tests them.
+
+None of this is a promise about a *program*: instructions are append-only within
+a VM major version and `vm_min_version` handles that separately, so a firmware
+upgrade never invalidates a program already running.
 
 ## State machines
 
@@ -364,4 +426,3 @@ That last pair matters most. **Rejection cases are the ones independent implemen
 ## Open questions
 
 - Should `FRAME` support run-length or delta encoding for Art-Net ingest at high universe counts? Worth measuring before adding — it complicates the hottest path in the system.
-- Does `STATE_PUSH` need a size cap per message, or is TCP framing enough? A large `effect` record could otherwise stall a gossip round.

@@ -24,7 +24,8 @@
           "to": "mesh",
           "datagram": {
             "$starts_with": "4c011000abcd11111111"
-          }
+          },
+          "transport": "datagram"
         },
         {
           "action": "set_timer",
@@ -55,7 +56,8 @@
           "to": "0a0a0a0a",
           "datagram": {
             "$starts_with": "4c011100abcd11111111"
-          }
+          },
+          "transport": "datagram"
         },
         {
           "action": "set_timer",
