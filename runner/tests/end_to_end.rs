@@ -283,3 +283,50 @@ fn the_self_test_passes_on_the_shipped_corpus() {
     assert_eq!(code, EXIT_OK, "{text}");
     assert!(text.contains("0 problems"), "{text}");
 }
+
+#[test]
+fn execute_drives_a_real_adapter_end_to_end_and_reports_a_clean_run() {
+    // `cli::tests` covers `execute`'s parsing and its usage-error exits with a
+    // scripted / never-spawned adapter, but never the success path — spawning,
+    // running the whole corpus, and rendering a passing tally — because that
+    // needs a real adapter process, which unit tests deliberately never start.
+    // This is the one place that walks the entire `main` behind the binary.
+    use lumen_conformance::cli::{execute, Options, EXIT_OK};
+    let (text, code) = execute(&Options {
+        vectors: vectors_dir(),
+        adapter: Some(format!(
+            "\"{ADAPTER}\" --vectors \"{}\"",
+            vectors_dir().display()
+        )),
+        ..Options::default()
+    });
+    assert_eq!(code, EXIT_OK, "{text}");
+    assert!(text.contains("0 failed"), "{text}");
+}
+
+#[test]
+fn execute_reports_exit_failures_when_a_real_run_has_failing_checks() {
+    // The mirror of the test above: `execute` must translate a nonzero failure
+    // count from a real run into `EXIT_FAILURES`, not just `EXIT_OK`/usage.
+    use lumen_conformance::cli::{execute, Options, EXIT_FAILURES};
+    let empty = std::env::temp_dir().join("lumen-e2e-execute-failures");
+    std::fs::create_dir_all(&empty).unwrap();
+    std::fs::write(
+        empty.join("nothing.json"),
+        r#"{"schema":1,"message":"NONE","description":"an adapter that knows nothing",
+             "cases":[{"name":"c","description":"d","datagram":"","expect":"reject",
+                       "reason":"empty"}]}"#,
+    )
+    .unwrap();
+
+    let (text, code) = execute(&Options {
+        vectors: vectors_dir(),
+        adapter: Some(format!("\"{ADAPTER}\" --vectors \"{}\"", empty.display())),
+        filter: Some("TICK".to_string()),
+        ..Options::default()
+    });
+    assert_eq!(code, EXIT_FAILURES, "{text}");
+    assert!(!text.contains("0 failed"), "{text}");
+
+    std::fs::remove_dir_all(&empty).unwrap();
+}
