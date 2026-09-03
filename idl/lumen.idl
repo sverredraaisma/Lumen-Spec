@@ -40,11 +40,21 @@ struct Header {
 // reject it anyway, but only after a wasted decrypt, and at 50 devices x 60 Hz
 // that waste is real.
 
-// The header is the AEAD associated data; the payload is the plaintext.
-// ChaCha20-Poly1305 under the mesh key. flags bit 0 selects encrypted-and-
-// authenticated versus authenticated-only — pixel data and audio bands are not
-// secret, and skipping the cipher on them saves cycles that matter on a C3.
-// Authentication is never optional.
+// ChaCha20-Poly1305 (RFC 8439) under the mesh key. flags bit 0 selects
+// encrypted-and-authenticated versus authenticated-only — pixel data and audio
+// bands are not secret, and skipping the cipher on them saves cycles that
+// matter on a C3. Authentication is never optional.
+//
+// The two modes are the same primitive with different inputs, and both write
+// the same 16-byte tag in the same place:
+//
+//   bit 0 = 1   associated data = header,             plaintext = payload
+//   bit 0 = 0   associated data = header || payload,  plaintext = empty
+//
+// Not a second construction, so an implementation needs one algorithm and no
+// separate MAC key. Spelled out because "authenticated but not encrypted" has
+// several plausible encodings and the tag only interoperates if everyone picks
+// the same one.
 //
 // Nonce, 12 bytes: sender_prefix (4) || sequence (4) || boot_counter (4).
 //

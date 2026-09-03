@@ -38,7 +38,18 @@ off  size  field
 
 ### AEAD
 
-ChaCha20-Poly1305 under the mesh key. **The header is associated data; the payload is the plaintext.** Bit 0 of `flags` selects whether the payload is encrypted-and-authenticated or authenticated-only — pixel data and audio bands are not secret, and skipping the cipher on them saves cycles that matter on a C3. Authentication is never optional.
+ChaCha20-Poly1305 (RFC 8439) under the mesh key. Bit 0 of `flags` selects whether the payload is encrypted-and-authenticated or authenticated-only — pixel data and audio bands are not secret, and skipping the cipher on them saves cycles that matter on a C3. Authentication is never optional.
+
+The two modes differ only in what is handed to the AEAD, and both produce the same 16-byte tag in the same place:
+
+| `flags` bit 0 | associated data | plaintext |
+|---|---|---|
+| 1 — encrypted | the 24-byte header | the payload |
+| 0 — authenticated only | the 24-byte header ‖ the payload | empty |
+
+Authenticated-only is therefore the *same* primitive with the payload moved into the associated data, not a second construction. That matters: an implementation needs one algorithm, not two, and there is no separate MAC whose key derivation could be got wrong. It is spelled out because "authenticated but not encrypted" has several plausible encodings and the tag is only interoperable if everyone picks the same one.
+
+Bit 0 lives inside the header, and the header is authenticated in both modes, so an attacker cannot flip the mode without invalidating the tag. The two modes also feed Poly1305 different byte streams for the same datagram — RFC 8439 pads and length-encodes the associated data and the ciphertext separately — so a tag computed in one mode never verifies in the other.
 
 Nonce, 12 bytes:
 
