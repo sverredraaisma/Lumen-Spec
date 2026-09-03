@@ -147,6 +147,28 @@ blob  payload
 
 Latest-wins with hold. A receiver drops any `CHAN` whose `producer_seq` is older than the newest seen from the current owner.
 
+The `payload` is opaque to the protocol: what is in it depends on what kind of channel it is. One layout is fixed here because every implementation has to read it — see below.
+
+#### Audio channel payload
+
+40 bytes, and the same whichever of the four sources produced it, so an effect never knows or cares where the audio came from.
+
+```
+0    32   bands[32]      u8 each, log-spaced, AGC-normalised
+32   1    level
+33   1    smoothed_level
+34   1    flags           bit0 onset, rest reserved
+35   1    confidence
+36   2    beat_phase      u16, one beat spans the full range and wraps
+38   2    bpm_x4          u16, quarter-BPM; 0 means unknown
+```
+
+Analysis happens at the source, once, and only the result is broadcast — never raw audio.
+
+**`beat_phase`, not beat events.** A receiver that misses a packet can extrapolate where in the bar it is and stay on beat; an effect fed discrete beat events stutters instead. A beat delivered late as an event is worse than useless, because the flash lands after the drum. Every `u16` is a valid phase, so there is no malformed case to define on the hottest path in the system.
+
+A payload **shorter** than 40 bytes is malformed. A **longer** one is accepted and the excess ignored, so a later minor version can append a field without taking the mesh's audio away from a device that has not been upgraded. Unknown `flags` bits are ignored for the same reason.
+
 ### `CHAN_CLAIM` / `CHAN_RELEASE` — 0x22 / 0x23
 
 ```
