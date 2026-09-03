@@ -226,6 +226,10 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
         "records_a_device_may_only_sign_its_own_device_record",
         "records_an_unauthorised_author_is_rejected",
         "records_an_older_record_never_replaces_a_newer_one",
+        "render_the_highest_priority_source_wins_each_pixel_it_covers",
+        "render_a_faulting_program_leaves_what_was_underneath",
+        "render_a_pixel_no_source_covers_is_left_untouched",
+        "render_a_source_the_stack_refused_does_not_reach_a_pixel",
     ] {
         assert!(scenarios.contains(&name), "no behavioural vector `{name}`");
     }
@@ -238,7 +242,13 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
             assert!(
                 matches!(
                     scenario.machine.as_str(),
-                    "node" | "sources" | "channel" | "gateway" | "zone" | "records"
+                    "node"
+                        | "sources"
+                        | "channel"
+                        | "gateway"
+                        | "zone"
+                        | "records"
+                        | "render"
                 ),
                 "{} names an unknown machine `{}`",
                 file.path,

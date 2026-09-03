@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "render",
+  "name": "render_a_pixel_no_source_covers_is_left_untouched",
+  "description": "A pixel outside every admitted source's zone is not written at all, rather than written black. That difference is what lets an output stage hold an ambient value, a previous frame or a fallback underneath the compositor: if the renderer zeroed what it did not cover, every pixel outside a zone would go dark the moment any source was pushed.",
+  "initial_state": {
+    "budget": 100000,
+    "max_concurrent": 4,
+    "led_count": 4
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "bind",
+        "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "priority": 10,
+        "expires_at_us": null,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 10,
+        "program": "4c564d00010000000000020000000000000004000500000000000000000000000000000000000100021000000211010002120000a0101112",
+        "led_from": 1,
+        "led_to": 3
+      },
+      "description": "a source covering only the middle of the strip",
+      "expect": [
+        {
+          "action": "admitted",
+          "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "frame",
+        "t": 0
+      },
+      "description": "the ends are exactly as the buffer was handed over. The harness starts it black so that 'nobody wrote here' is distinguishable from 'something wrote black', which are the same colour and not the same fact.",
+      "expect": [
+        {
+          "action": "pixels",
+          "rgb": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              65536,
+              0
+            ],
+            [
+              0,
+              65536,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "render",
+  "name": "render_a_faulting_program_leaves_what_was_underneath",
+  "description": "A device is never dark because of software. A program that faults mid-frame leaves the pixel showing whatever was underneath rather than black, and the fault is reported rather than swallowed - a program that dies every frame is a bug somebody needs to hear about, and the alternative is a strip that is quietly the wrong colour. The high-priority source here divides by zero on every pixel, which is a fault the VM catches at run time rather than a program the loader could have refused.",
+  "initial_state": {
+    "budget": 100000,
+    "max_concurrent": 4,
+    "led_count": 3
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "bind",
+        "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "priority": 10,
+        "expires_at_us": null,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 10,
+        "program": "4c564d00010000000000020000000000000004000500000000000000000000000000010000000000021000000211010002120100a0101112",
+        "led_from": 0,
+        "led_to": 3
+      },
+      "expect": [
+        {
+          "action": "admitted",
+          "id": "d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "bind",
+        "id": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
+        "zone": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "scene": "f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0",
+        "priority": 200,
+        "expires_at_us": 9000000,
+        "fade_in_ms": 0,
+        "fade_out_ms": 0,
+        "cost": 10,
+        "program": "4c564d00010000000000020000000000000004000a00000000000000000000000000010000000000021000000211010006121011a0121212",
+        "led_from": 0,
+        "led_to": 3
+      },
+      "description": "an alert that outranks it and cannot run",
+      "expect": [
+        {
+          "action": "admitted",
+          "id": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "frame",
+        "t": 0
+      },
+      "description": "every pixel still shows the scene underneath, and the alert is named as having faulted. Taking the pixels to black would be the visible failure this rule exists to prevent.",
+      "expect": [
+        {
+          "action": "pixels",
+          "rgb": [
+            [
+              65536,
+              0,
+              0
+            ],
+            [
+              65536,
+              0,
+              0
+            ],
+            [
+              65536,
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "action": "faulted",
+          "source": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2"
+        }
+      ]
+    }
+  ]
+}
