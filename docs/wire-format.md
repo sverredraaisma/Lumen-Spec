@@ -191,6 +191,23 @@ u16  count
 
 Fragmentation uses header `flags` bits 1–2 when a segment exceeds the MTU.
 
+### Datagram size
+
+**A datagram is at most 1200 bytes, header and tag included.** That leaves 1160
+bytes of message payload once the 24-byte header and the 16-byte tag are
+subtracted, and it is what the compiler assumes when sizing a `CHAN` payload.
+
+1200 rather than something closer to a 1500-byte Ethernet MTU because a
+surprising number of home networks put a tunnel somewhere in the path — a VPN, a
+mesh-WiFi backhaul, a carrier doing PPPoE — and each shaves the usable size.
+Fragmentation exists for the cases that genuinely need more, but a *show* that
+fragments every frame has turned one lost packet into two, so the common path is
+sized to fit.
+
+The limit is on the whole datagram rather than on the payload inside it, because
+what has to survive the path is the packet, and a rule about the payload alone
+would be 40 bytes wrong in exactly the case where it matters.
+
 ### `SRC_PUSH` / `SRC_RENEW` / `SRC_POP` — 0x30–0x32
 
 ```
@@ -346,6 +363,5 @@ That last pair matters most. **Rejection cases are the ones independent implemen
 
 ## Open questions
 
-- MTU: assume 1200-byte payloads to survive tunnels, or 1400 for efficiency on a plain LAN? Fragmentation flags exist either way; the question is what the compiler assumes when sizing a `CHAN` payload.
 - Should `FRAME` support run-length or delta encoding for Art-Net ingest at high universe counts? Worth measuring before adding — it complicates the hottest path in the system.
 - Does `STATE_PUSH` need a size cap per message, or is TCP framing enough? A large `effect` record could otherwise stall a gossip round.
