@@ -5,6 +5,18 @@ stdin/stdout and forwards each request into the implementation under test.
 Adapters live with their implementations, not here. This directory holds the
 line-protocol definition and a reference adapter to copy from.
 
+Known adapters:
+
+| Implementation | Adapter | Kinds |
+|---|---|---|
+| `lumen-device` | `adapters/conformance/` in that repo | behavioural |
+
+The reference adapter in `echo/` is a **fixture**, not an implementation: it
+answers from the corpus, so it passes by construction and proves nothing about
+anybody's code. It exists to exercise the runner and to be copied from. An
+implementation with no adapter of its own is an implementation the suite has
+never checked, however many vectors are written for it.
+
 Because the implementation core is sans-IO, an adapter is a loop around a pair
 of pure functions and nothing else. No sockets, no threads.
 
