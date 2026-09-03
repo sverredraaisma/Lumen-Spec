@@ -9,7 +9,8 @@ Known adapters:
 
 | Implementation | Adapter | Kinds |
 |---|---|---|
-| `lumen-device` | `adapters/conformance/` in that repo | behavioural |
+| `lumen-proto` | `adapters/conformance/` in `lumen-core` | codec |
+| `lumen-device` | `adapters/conformance/` in `lumen-device` | behavioural |
 
 The reference adapter in `echo/` is a **fixture**, not an implementation: it
 answers from the corpus, so it passes by construction and proves nothing about
