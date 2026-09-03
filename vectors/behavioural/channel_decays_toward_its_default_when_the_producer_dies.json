@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "channel",
+  "name": "channel_decays_toward_its_default_when_the_producer_dies",
+  "description": "Staleness is defined, not incidental. A dead audio source must fade the lights to steady rather than freeze them mid-beat — the defined visual outcome that 'a device is never dark because of software' requires. Freezing the last value is the failure this pins: it looks like working software until the music stops.",
+  "initial_state": {
+    "channel_id": 5,
+    "hold_ms": 400,
+    "default": 0
+  },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": {
+        "event": "claim",
+        "producer": "aaaaaaaa",
+        "priority": 10,
+        "lease_ms": 60000
+      },
+      "expect": [
+        {
+          "action": "claimed",
+          "outcome": "taken"
+        }
+      ]
+    },
+    {
+      "at_us": 0,
+      "event": {
+        "event": "publish",
+        "producer": "aaaaaaaa",
+        "seq": 1,
+        "value": 65536
+      },
+      "description": "one full-scale value, and then the producer goes quiet",
+      "expect": [
+        {
+          "action": "published"
+        }
+      ]
+    },
+    {
+      "at_us": 400000,
+      "event": {
+        "event": "read"
+      },
+      "description": "within the hold window the value stands unchanged",
+      "expect": [
+        {
+          "action": "value",
+          "value": 65536,
+          "stale": false
+        }
+      ]
+    },
+    {
+      "at_us": 600000,
+      "event": {
+        "event": "read"
+      },
+      "description": "past it the value is on its way to the default, and is now stale. The exact ramp is an implementation's to choose, so this pins only that it is between the two and no longer at either end.",
+      "expect": [
+        {
+          "action": "value",
+          "value": {
+            "$between": [
+              1,
+              65535
+            ]
+          },
+          "stale": true
+        }
+      ]
+    },
+    {
+      "at_us": 800000,
+      "event": {
+        "event": "read"
+      },
+      "description": "two hold windows out it has reached the default exactly. That endpoint is not a matter of taste: a channel that settled near its default rather than on it would leave a permanent dim glow nobody asked for.",
+      "expect": [
+        {
+          "action": "value",
+          "value": 0,
+          "stale": true
+        }
+      ]
+    },
+    {
+      "at_us": 4000000000,
+      "event": {
+        "event": "read"
+      },
+      "description": "and it is still the default an hour later. This step is not redundant with the one above: an implementation that reaches the default by interpolation alone, with no early exit once the fade is done, computes the elapsed time in a 32-bit value here and wraps it negative — the fade runs backwards and the channel snaps back to whatever it last held, in a room nobody has touched since.",
+      "expect": [
+        {
+          "action": "value",
+          "value": 0,
+          "stale": true
+        }
+      ]
+    }
+  ]
+}

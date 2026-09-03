@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "channel",
+  "name": "channel_a_reordered_packet_from_the_owner_is_dropped",
+  "description": "Latest-wins with hold: a CHAN older than the newest seen from the current owner is dropped. Without it a reordered packet on a lossy network makes the lights jump backwards for one frame, which reads as a glitch rather than as the network. The counter is compared as a wrapping u16 — at 60 Hz it wraps every eighteen minutes, and a plain comparison would stall the channel there until the producer restarted.",
+  "initial_state": { "channel_id": 5, "hold_ms": 0, "default": 0 },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "claim", "producer": "aaaaaaaa", "priority": 10, "lease_ms": 60000 },
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    },
+    {
+      "at_us": 1000,
+      "event": { "event": "publish", "producer": "aaaaaaaa", "seq": 10, "value": 65536 },
+      "expect": [ { "action": "published" } ]
+    },
+    {
+      "at_us": 2000,
+      "event": { "event": "publish", "producer": "aaaaaaaa", "seq": 9, "value": 0 },
+      "description": "a packet from before the last one is dropped",
+      "expect": [ { "action": "dropped" } ]
+    },
+    {
+      "at_us": 3000,
+      "event": { "event": "read" },
+      "description": "so the value is still the newest one that arrived, not the stale one",
+      "expect": [ { "action": "value", "value": 65536, "stale": false } ]
+    },
+    {
+      "at_us": 4000,
+      "event": { "event": "publish", "producer": "aaaaaaaa", "seq": 11, "value": 32768 },
+      "expect": [ { "action": "published" } ]
+    },
+    {
+      "at_us": 5000,
+      "event": { "event": "publish", "producer": "bbbbbbbb", "seq": 12, "value": 0 },
+      "description": "and a packet from anyone but the owner is dropped whatever its sequence",
+      "expect": [ { "action": "dropped" } ]
+    },
+    {
+      "at_us": 6000,
+      "event": { "event": "read" },
+      "expect": [ { "action": "value", "value": 32768, "stale": false } ]
+    }
+  ]
+}

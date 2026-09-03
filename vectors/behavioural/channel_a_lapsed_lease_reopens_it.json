@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "channel",
+  "name": "channel_a_lapsed_lease_reopens_it",
+  "description": "The lease is what makes a crashed producer release the channel without anyone noticing it crashed. Nothing sends a release when a laptop's battery dies, so a channel held without a deadline is held forever and the room's audio never comes back.",
+  "initial_state": { "channel_id": 5, "hold_ms": 400, "default": 0 },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "claim", "producer": "aaaaaaaa", "priority": 200, "lease_ms": 1000 },
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    },
+    {
+      "at_us": 999999,
+      "event": { "event": "advance" },
+      "description": "one microsecond before the lease ends it is still held",
+      "expect": []
+    },
+    {
+      "at_us": 1000000,
+      "event": { "event": "advance" },
+      "description": "at the deadline it lapses, and the lapsed owner is named so a shell can log which producer went away",
+      "expect": [ { "action": "lease_lapsed", "producer": "aaaaaaaa" } ]
+    },
+    {
+      "at_us": 1000001,
+      "event": { "event": "claim", "producer": "bbbbbbbb", "priority": 1, "lease_ms": 1000 },
+      "description": "and a far lower priority can now take it, because it is free rather than outranked",
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    }
+  ]
+}

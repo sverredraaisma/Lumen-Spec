@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "channel",
+  "name": "channel_a_release_from_a_stranger_is_ignored",
+  "description": "Only the owner may release. Honouring a release from anyone else would let any device on the mesh knock the desktop app off the audio channel with a single packet, which is a denial of service written into the protocol.",
+  "initial_state": { "channel_id": 5, "hold_ms": 400, "default": 0 },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "claim", "producer": "aaaaaaaa", "priority": 10, "lease_ms": 1000 },
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    },
+    {
+      "at_us": 100000,
+      "event": { "event": "release", "producer": "cccccccc" },
+      "description": "a stranger's release changes nothing",
+      "expect": [ { "action": "release_ignored" } ]
+    },
+    {
+      "at_us": 200000,
+      "event": { "event": "claim", "producer": "dddddddd", "priority": 1, "lease_ms": 1000 },
+      "description": "proof the channel is still held: a lower claim is still refused",
+      "expect": [ { "action": "claimed", "outcome": "refused", "holder": "aaaaaaaa" } ]
+    },
+    {
+      "at_us": 300000,
+      "event": { "event": "release", "producer": "aaaaaaaa" },
+      "description": "the owner's own release is honoured",
+      "expect": [ { "action": "released" } ]
+    },
+    {
+      "at_us": 400000,
+      "event": { "event": "claim", "producer": "dddddddd", "priority": 1, "lease_ms": 1000 },
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    }
+  ]
+}

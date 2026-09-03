@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "channel",
+  "name": "channel_equal_priority_does_not_preempt",
+  "description": "Strictly greater priority preempts; equal priority does not. Without the strictness two identical producers — two microphones, or two copies of the desktop app — take the channel from each other on every frame and neither ever publishes. An implementation that used >= here would look correct with one producer and fail only when a second appeared.",
+  "initial_state": { "channel_id": 5, "hold_ms": 400, "default": 0 },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "claim", "producer": "aaaaaaaa", "priority": 10, "lease_ms": 1000 },
+      "description": "the channel is free, so the first claim takes it",
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    },
+    {
+      "at_us": 100000,
+      "event": { "event": "claim", "producer": "bbbbbbbb", "priority": 10, "lease_ms": 1000 },
+      "description": "an equal claim is refused and the holder is named",
+      "expect": [ { "action": "claimed", "outcome": "refused", "holder": "aaaaaaaa" } ]
+    },
+    {
+      "at_us": 200000,
+      "event": { "event": "claim", "producer": "aaaaaaaa", "priority": 10, "lease_ms": 1000 },
+      "description": "the owner renewing is not a fresh take: the sequence high-water mark has to survive, or a renewal reopens the channel to replayed packets",
+      "expect": [ { "action": "claimed", "outcome": "renewed" } ]
+    },
+    {
+      "at_us": 300000,
+      "event": { "event": "claim", "producer": "bbbbbbbb", "priority": 11, "lease_ms": 1000 },
+      "description": "one higher preempts, and the loser is told so it can stop immediately",
+      "expect": [ { "action": "claimed", "outcome": "preempted", "previous": "aaaaaaaa" } ]
+    }
+  ]
+}

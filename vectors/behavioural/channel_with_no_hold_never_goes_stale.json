@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "kind": "behavioural",
+  "machine": "channel",
+  "name": "channel_with_no_hold_never_goes_stale",
+  "description": "`hold 0` means never stale, which is right for a value pushed only on change — a scrolling message, a mode selector. Treating silence as failure there would be exactly wrong: the message would fade out because nobody changed it.",
+  "initial_state": { "channel_id": 7, "hold_ms": 0, "default": 0 },
+  "steps": [
+    {
+      "at_us": 0,
+      "event": { "event": "claim", "producer": "aaaaaaaa", "priority": 10, "lease_ms": 600000 },
+      "expect": [ { "action": "claimed", "outcome": "taken" } ]
+    },
+    {
+      "at_us": 0,
+      "event": { "event": "publish", "producer": "aaaaaaaa", "seq": 1, "value": 45000 },
+      "expect": [ { "action": "published" } ]
+    },
+    {
+      "at_us": 300000000,
+      "event": { "event": "read" },
+      "description": "five minutes later, with nothing published since, the value is untouched",
+      "expect": [ { "action": "value", "value": 45000, "stale": false } ]
+    }
+  ]
+}

@@ -206,6 +206,12 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
         "source_stack_falls_back_as_each_source_expires",
         "source_admission_drops_the_least_important",
         "source_pop_fades_out_before_it_is_gone",
+        "channel_equal_priority_does_not_preempt",
+        "channel_a_lapsed_lease_reopens_it",
+        "channel_a_release_from_a_stranger_is_ignored",
+        "channel_a_reordered_packet_from_the_owner_is_dropped",
+        "channel_decays_toward_its_default_when_the_producer_dies",
+        "channel_with_no_hold_never_goes_stale",
     ] {
         assert!(scenarios.contains(&name), "no behavioural vector `{name}`");
     }
@@ -216,7 +222,7 @@ fn the_shipped_behavioural_corpus_covers_the_scenarios_the_spec_names() {
     for file in &files {
         if let Some(scenario) = file.scenario() {
             assert!(
-                matches!(scenario.machine.as_str(), "node" | "sources"),
+                matches!(scenario.machine.as_str(), "node" | "sources" | "channel"),
                 "{} names an unknown machine `{}`",
                 file.path,
                 scenario.machine
