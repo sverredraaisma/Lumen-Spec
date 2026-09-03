@@ -513,7 +513,7 @@ mod tests {
             },
         ]);
         let mut adapter = scripted(&["ok {}", "ignore"]);
-        let report = run_all(&[file.clone()], &mut adapter, Some("beta"));
+        let report = run_all(core::slice::from_ref(&file), &mut adapter, Some("beta"));
         assert_eq!(report.total(), 1);
         assert_eq!(report.outcomes[0].case, "beta");
 
