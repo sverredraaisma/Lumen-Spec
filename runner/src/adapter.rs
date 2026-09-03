@@ -74,11 +74,31 @@ impl ChildAdapter {
 
 impl Adapter for ChildAdapter {
     fn request(&mut self, request: &Request) -> Result<Response, String> {
-        writeln!(self.stdin, "{}", request.to_line())
-            .and_then(|()| self.stdin.flush())
-            .map_err(|e| format!("writing to the adapter failed: {e}"))?;
+        let written =
+            writeln!(self.stdin, "{}", request.to_line()).and_then(|()| self.stdin.flush());
+        if let Err(e) = written {
+            return Err(describe_write_failure(&e));
+        }
         self.read_response()
     }
+}
+
+/// What to report when writing a request to the adapter fails.
+///
+/// An adapter that has already exited reports differently depending on the
+/// platform: the write into the pipe fails immediately on Unix, and succeeds
+/// into a buffer on Windows so that only the following read notices. Both are
+/// the same event to whoever reads the report — the adapter is gone — so both
+/// say so, and the two-spellings-for-one-event problem does not reach the
+/// operator.
+///
+/// Anything that is not a dead pipe keeps its own wording, because a full disk
+/// or a bad handle is a different problem with a different fix.
+fn describe_write_failure(e: &std::io::Error) -> String {
+    if e.kind() == std::io::ErrorKind::BrokenPipe {
+        return "the adapter closed its output before answering".to_string();
+    }
+    format!("writing to the adapter failed: {e}")
 }
 
 impl Drop for ChildAdapter {
@@ -123,6 +143,31 @@ pub fn split_command(command: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
+    use std::io::{Error, ErrorKind};
+
+    #[test]
+    fn a_dead_pipe_reads_as_a_dead_adapter_whatever_the_platform() {
+        // The branch CI exercises and this machine does not: on Unix the write
+        // fails, on Windows the read does. A test that only ran where the
+        // developer happens to be would have caught neither.
+        let e = Error::new(ErrorKind::BrokenPipe, "broken pipe");
+        assert_eq!(
+            describe_write_failure(&e),
+            "the adapter closed its output before answering"
+        );
+    }
+
+    #[test]
+    fn any_other_write_failure_keeps_its_own_wording() {
+        // A full disk or a bad handle is a different problem with a different
+        // fix, and collapsing it into "the adapter is gone" would send whoever
+        // reads it looking in the wrong place.
+        let e = Error::new(ErrorKind::PermissionDenied, "denied");
+        let m = describe_write_failure(&e);
+        assert!(m.starts_with("writing to the adapter failed"), "{m}");
+        assert!(m.contains("denied"), "{m}");
+    }
+
     use super::*;
     use crate::json::Json;
 
